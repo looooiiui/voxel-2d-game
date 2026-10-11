@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bhekm5ljs7oiq"]
+
+[ext_resource type="Script" uid="uid://d03e3hcsnxxye" path="res://Systems/RenderBridge/render_bridge.gd" id="1_tg6ej"]
+
+[node name="RenderBridge" type="Node" unique_id=288834794 node_paths=PackedStringArray("tile_map_layer", "world")]
+script = ExtResource("1_tg6ej")
+tile_map_layer = NodePath("")
+world = NodePath("")

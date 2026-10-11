@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://csu3kv2gsd8eo"]
+
+[ext_resource type="Script" uid="uid://jw5ugev6i60g" path="res://AlphaScenes/Scenes/using_player.gd" id="1_hgn87"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_wvhbo"]
+
+[node name="UsingPlayer" type="Node2D" unique_id=34264864 node_paths=PackedStringArray("information_label", "display_sprite")]
+script = ExtResource("1_hgn87")
+information_label = NodePath("InformationLabel")
+display_sprite = NodePath("UsingSprite")
+
+[node name="UsingSprite" type="Sprite2D" parent="." unique_id=722697343]
+scale = Vector2(32, 32)
+texture = SubResource("CanvasTexture_wvhbo")
+metadata/_edit_lock_ = true
+
+[node name="InformationLabel" type="Label" parent="." unique_id=2134341376]
+offset_right = 40.0
+offset_bottom = 23.0

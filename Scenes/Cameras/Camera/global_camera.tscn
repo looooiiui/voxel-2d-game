@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://b6m0ir133wokq"]
+
+[ext_resource type="Script" uid="uid://wjis55b64a5g" path="res://Codes/Cameras/Camera/global_camera.gd" id="1_kupe1"]
+[ext_resource type="Script" uid="uid://b3u6tiv1ptm4" path="res://Codes/Cameras/Camera/grid_preview.gd" id="2_75ln5"]
+
+[node name="GlobalCamera" type="Camera2D" unique_id=675677074]
+script = ExtResource("1_kupe1")
+
+[node name="Select" type="Line2D" parent="." unique_id=2025276088 node_paths=PackedStringArray("camera")]
+closed = true
+width = 1.8
+script = ExtResource("2_75ln5")
+camera = NodePath("..")

@@ -1,0 +1,16 @@
+[
+	{
+		"name": "AIR",
+		"id": 0,
+		"hp": 0,
+		"is_solid": false,
+		"light_emission": 0
+	},
+	{
+		"name": "STONE",
+		"id": 1,
+		"hp": -1,
+		"is_solid": true,
+		"light_emission": 0
+	},
+]

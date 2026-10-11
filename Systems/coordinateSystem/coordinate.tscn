@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b63560fitctgk"]
+
+[ext_resource type="Script" uid="uid://bvlnskdl4lg0y" path="res://Systems/coordinateSystem/coordinate.gd" id="1_vboob"]
+
+[node name="Coordinate" type="Node" unique_id=206475590]
+script = ExtResource("1_vboob")
