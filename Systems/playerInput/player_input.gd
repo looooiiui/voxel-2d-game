@@ -34,10 +34,7 @@ func _handle_left_click() -> void:
 # 新增：放置
 func _handle_place_click() -> void:
 	var world_mouse_pos: Vector2 = camera.get_global_mouse_position()
-	var global_tile = Vector2i(
-		floor(world_mouse_pos.x / 32.0),
-		floor(world_mouse_pos.y / 32.0)
-	)
+	var global_tile = CoordinateAttributes.cal_current_grid_pos(world_mouse_pos.x, world_mouse_pos.y)
 	DebugSystem.console_common_log("输入控制系统", "发送放置请求 %s" % global_tile)
 	emit_signal("block_place_request", global_tile)
 	

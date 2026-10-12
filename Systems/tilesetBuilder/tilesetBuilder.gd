@@ -51,13 +51,13 @@ static func get_texture_atlas_source(texture_path: String, name: String) -> void
 	var atlas_source = TileSetAtlasSource.new()
 	atlas_source.texture = tex
 	# 单图，图集图块大小 为网格距离 x 网格距离
-	var grip_distance: int = CoordinateAttributes.get_coordinate_distance()
+	var grid_distance: int = CoordinateAttributes.get_coordinate_distance()
 	atlas_source.texture_region_size = Vector2i(
-		grip_distance,
-		grip_distance
+		grid_distance,
+		grid_distance
 	)
 	var atlas_pos = Vector2i(0,0)
-	# 关键：注册这个图集内的瓦片
+	# 注册这个图集内的瓦片
 	atlas_source.create_tile(atlas_pos)
 	
 	# 添加source进tileset，拿到source_id
@@ -72,13 +72,13 @@ static func get_texture_atlas_source(texture_path: String, name: String) -> void
 		# 添加碰撞箱
 		if tile_data != null:
 			tile_data.add_collision_polygon(0)
-			var grip_half: int = grip_distance / 2
+			var grid_half: int = grid_distance / 2
 			var rect_poly = PackedVector2Array(
 				[
-				Vector2(-grip_half, -grip_half),
-				Vector2(grip_half, -grip_half),
-				Vector2(grip_half, grip_half),
-				Vector2(-grip_half, grip_half)
+				Vector2(-grid_half, -grid_half),
+				Vector2(grid_half, -grid_half),
+				Vector2(grid_half, grid_half),
+				Vector2(-grid_half, grid_half)
 				]
 			)
 			tile_data.set_collision_polygon_points(0,0, rect_poly)

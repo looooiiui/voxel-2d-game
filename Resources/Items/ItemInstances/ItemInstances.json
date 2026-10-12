@@ -1,0 +1,12 @@
+[
+	{
+		"name": "stone",
+		"attribute": "STONE",
+		"place_tile_name": "stone"
+	},
+	{
+		"name": "dirt",
+		"attribute": "DIRT",
+		"place_tile_name": "dirt"
+	}
+]

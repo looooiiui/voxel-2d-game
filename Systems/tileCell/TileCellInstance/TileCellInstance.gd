@@ -4,22 +4,28 @@ extends RefCounted
 class_name TileCellInstance
 
 var name: String = ""
-var attrubute: TileCellAttribute
+var drop_item = null
+var attribute: TileCellAttribute
 
 ## 初始化完整方块，需要
-func _init(new_name: String, newAttrubute: TileCellAttribute) -> void:
+func _init(new_name: String, newAttribute: TileCellAttribute, new_drop_item) -> void:
 	name = new_name
-	attrubute = newAttrubute
+	attribute = newAttribute
+	drop_item = new_drop_item
 
 ## 更改瓦片属性
 func change_cell_attribute(newAttribute: TileCellAttribute) -> void:
-	attrubute = newAttribute
+	attribute = newAttribute
 
 ## 获得瓦片属性
 func get_cell_attribute() -> TileCellAttribute:
-	return attrubute
+	return attribute
 
+## 获得瓦片掉落物映射
+func get_tile_drop_item() -> String:
+	return drop_item
+	
 ## 克隆方法，返回克隆属性方块
 func copy() -> TileCellInstance:
-	var new_cell = TileCellInstance.new(name, attrubute)
+	var new_cell = TileCellInstance.new(name, attribute, drop_item)
 	return new_cell

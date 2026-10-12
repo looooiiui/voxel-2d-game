@@ -20,6 +20,10 @@ func _init(new_hp: int = -1, new_solid_state:bool = true, new_light: int = 0, ne
 	is_solid = new_solid_state
 	light_emission = new_light
 
+## 重置注册表ID
+static func reset_counter():
+	current_num = 0
+
 ## 这里是方块的基本属性
 ## id : 0 默认空气
 ## hp : -1 不可破坏

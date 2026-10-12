@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bj7yergspufjr"]
+
+[ext_resource type="Script" uid="uid://c52ko8ucspqdq" path="res://Codes/DropItemEntity/drop_item_entity.gd" id="1_2ll5h"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wvhbo"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_wvhbo"]
+
+[node name="DropItemEntity" type="RigidBody2D" unique_id=359558003 node_paths=PackedStringArray("collisionShape", "drop_sprite")]
+script = ExtResource("1_2ll5h")
+collisionShape = NodePath("DefaultColl")
+drop_sprite = NodePath("Sprite")
+
+[node name="DefaultColl" type="CollisionShape2D" parent="." unique_id=606180399]
+shape = SubResource("RectangleShape2D_wvhbo")
+
+[node name="Sprite" type="Sprite2D" parent="." unique_id=1270740249]
+scale = Vector2(32, 32)
+texture = SubResource("CanvasTexture_wvhbo")

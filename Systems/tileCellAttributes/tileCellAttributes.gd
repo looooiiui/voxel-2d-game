@@ -49,7 +49,7 @@ static func convert_block_array_to_dict(input_array:Array) -> Dictionary:
 			block_def.get("hp", -1),
 			block_def.get("is_solid", false),
 			block_def.get("light_emission", 0),
-			block_def.get("id", -1)
+			block_def.get("id", -1),
 		)
 		
 		result_dict[block_name] = attr

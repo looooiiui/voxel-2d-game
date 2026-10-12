@@ -22,10 +22,10 @@ func _draw_line(delta: float) -> void:
 	global_position = Vector2(preview_pos.x, preview_pos.y)
 	# 方块四个角（世界空间）
 	var origin = Vector2(0, 0)
-	var grip_distance = CoordinateAttributes.get_coordinate_distance()
+	var grid_distance = CoordinateAttributes.get_coordinate_distance()
 	var p1 = origin
-	var p2 = origin + Vector2(grip_distance,0)
-	var p3 = origin + Vector2(grip_distance,grip_distance)
-	var p4 = origin + Vector2(0,grip_distance)
+	var p2 = origin + Vector2(grid_distance,0)
+	var p3 = origin + Vector2(grid_distance,grid_distance)
+	var p4 = origin + Vector2(0,grid_distance)
 	# 绘制方框
 	points = [p1, p2, p3, p4]

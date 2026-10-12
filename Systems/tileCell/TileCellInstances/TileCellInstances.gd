@@ -9,7 +9,7 @@ static var OriginalInstancesType: Dictionary = {}
 ## 加载映射表
 static func load_mapping_instance() -> bool:
 	# 从指定路径打开映射表
-	var file_path: String = ResourcePath.tile_ceil_instances_path
+	var file_path: String = ResourcePath.tile_cell_instances_path
 	var mapping_file = FileAccess.open(file_path, FileAccess.READ)
 	if mapping_file == null:
 		DebugSystem.console_error_log("瓦片实例映射表", "映射文件打不开，路径：%s" % file_path)
@@ -51,7 +51,8 @@ static func convert_block_array_to_dict(input_array:Array) -> Dictionary:
 		
 		var attr = TileCellInstance.new(
 			block_name,
-			TileCellAttributes.OriginalBlockType[block_def["attribute"]]
+			TileCellAttributes.OriginalBlockType[block_def["attribute"]],
+			block_def.get("drop_item", "null")
 		)
 		
 		result_dict[block_name] = attr

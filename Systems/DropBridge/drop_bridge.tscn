@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://di41mwvh4s0iy"]
+
+[ext_resource type="Script" uid="uid://dfjii5lkkwl33" path="res://Systems/DropBridge/drop_bridge.gd" id="1_uue2j"]
+
+[node name="DropBridge" type="Node" unique_id=1424620046]
+script = ExtResource("1_uue2j")

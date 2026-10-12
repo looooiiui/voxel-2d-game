@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+class_name player
+
 const SPEED = 300.0
 const JUMP_VELOCITY = -400.0
 var grid_pos: Vector2i = Vector2i(0, 0)
@@ -34,3 +36,7 @@ func _player_move(delta: float) -> void:
 ## 获得玩家坐标
 func get_player_grid_pos() -> Vector2i:
 	return grid_pos
+	
+## 获得玩家浮点坐标
+func get_player_global_pos() -> Vector2:
+	return global_position

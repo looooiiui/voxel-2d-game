@@ -1,0 +1,14 @@
+[
+	{
+		"name": "STONE",
+		"id": 1,
+		"item_type": "BLOCK",
+		"max_stack": 64
+	},
+	{
+		"name": "DIRT",
+		"id": -1,
+		"item_type": "BLOCK",
+		"max_stack": 64
+	}
+]
