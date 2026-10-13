@@ -8,6 +8,7 @@ var item: Item
 var world_pos: Vector2
 var velocity: Vector2 = Vector2.ZERO
 var spawn_time: float # 生成时记录全局时间戳，过期判断交给管理器
+var is_pending_remove:bool = false
 var is_absorbing: bool = false
 
 func _init(new_uid:int, new_item:Item, start_pos:Vector2, current_world_time:float):

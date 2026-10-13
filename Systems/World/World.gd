@@ -1,15 +1,14 @@
 extends RefCounted
 class_name World
-
 ## 方块数据发生变更时触发，携带修改的全局方块坐标
 signal tile_cell_updated(global_tile_pos:Vector2i)
 ## 世界数据变更
 signal gravity_updated(new_gravity:float)
 # World对外暴露信号，DropBridge监听这一组
 signal drop_added(new_drop:DropItemInstance)
-signal drop_removed(uid:int)
+signal drop_removed(uid:int, item: Item, remove_reason: DropManager.DropDestroyReason)
 signal drop_apply_force(uid:int, absorb_force: Vector2)
-
+signal drop_info_updated(uid: int, new_position: Vector2, linear_velocity: Vector2)
 ## 世界属性
 var seed: int
 var gravity:float = 980
@@ -18,22 +17,19 @@ var drop_manager:DropManager
 # 区块清理
 var chunk_prune_timer:float = 0.0
 const PRUNE_INTERVAL:float = 2 # 2秒扫描一次区块，可调整
-
 ## 区块生成器 
 var terrain_generator: TerrainGenerator
 ## 已加载的区块 Key: 区块坐标Vector2i, value: Chunk
 var loaded_chunks: Dictionary[Vector2i, Chunk] = {}
 var data_unload_radius: int = 5
-# 玩家区块坐标，由外部每一帧写入World（World本身不持有player节点）
+# 玩家区块坐标，由外部每一帧写入玩家网格坐标后计算（World本身不持有player节点）
 var player_chunk_pos:Vector2i = Vector2i.ZERO
 # 保存当前已经绘制在TileMap上的区块
 var rendered_chunks:Dictionary = {}
-
 func _init(p_seed) -> void:
 	seed = p_seed
 	terrain_generator = TerrainGenerator.new(seed)
 	DebugSystem.console_common_log("世界", "创建世界,种子: %s" % seed)
-
 	# 创建掉落物
 	drop_manager = DropManager.new()
 	DebugSystem.console_common_log("世界", "生成掉落物管理器: %s" % drop_manager)
@@ -42,41 +38,44 @@ func _init(p_seed) -> void:
 	drop_manager.on_drop_removed = drop_removed.emit
 	drop_manager.on_drop_apply_force = drop_apply_force.emit
 	
+	## 内部管理器连接
+	drop_info_updated.connect(drop_manager.updated_drop_info)
+	
 ## 世界数据需要外接的计时器，本框架对接核心脚本
 func tick_world(delta:float, player_grid_pos:Vector2i, player_pixel_pos:Vector2) -> void:
 	world_time += delta
+	sync_chunk_pos(player_grid_pos)
 	drop_manager.tick(delta, world_time, player_pixel_pos)
 	chunk_prune_timer += delta
 	
 	if chunk_prune_timer >= PRUNE_INTERVAL:
-		prune_out_of_range_chunks()
+		prune_out_of_range_chunks(player_chunk_pos)
 		chunk_prune_timer = 0.0
 		DebugSystem.console_common_log("世界", "当前时间: %s" % world_time)
 	
-# 设置重力,通知外部世界重力发生改变
+## 设置重力,通知外部世界重力发生改变
 func set_gravity(new_val:float):
 	if new_val < 0: return
 	gravity = new_val
 	DebugSystem.console_common_log("世界", "设置重力: %s" % gravity)
 	emit_signal("gravity_updated", gravity)	
-	
+## 同步玩家所在区块坐标
+func sync_chunk_pos(player_grid_position:Vector2i) -> void:
+	# tick内自行计算玩家所在区块坐标
+	var result = ChunkCoordinateUtils.grid_to_chunk(player_grid_position.x, player_grid_position.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
+	player_chunk_pos = result
 	
 ## 【全局读方块入口】整个游戏读取方块统一调用这个
 ## world_tile_pos：全局瓦片坐标（一格=32像素）
 ## 这里用区块算的
 func get_tile(world_tile_pos: Vector2i) -> TileCell:
 	# 1. 全局瓦片坐标 → 换算成【区块坐标】+【区块内局部坐标】
-	var cx:int = int( floor( float(world_tile_pos.x) / Chunk.CHUNK_SIZE_X ) )
-	var cy:int = int( floor( float(world_tile_pos.y) / Chunk.CHUNK_SIZE_Y ) )
-	var chunk_pos: Vector2i = Vector2i(cx, cy)
+	var result = ChunkCoordinateUtils.grid_to_chunk_and_local(world_tile_pos.x, world_tile_pos.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
+	var chunk_pos: Vector2i = result.chunk
+	var local_pos: Vector2i = result.local
 	
 	##if world_tile_pos.x < 0:
 	##	DebugSystem.console_common_log("TEST", "%s" % chunk_pos)
-		
-	# cx,cy 是已经用floor算出来的chunk坐标
-	var lx = world_tile_pos.x - cx * Chunk.CHUNK_SIZE_X
-	var ly = world_tile_pos.y - cy * Chunk.CHUNK_SIZE_Y
-	var local_pos = Vector2i(lx, ly)
 	
 	# 2. 如果区块还没加载，新建+生成原生地形
 	if not loaded_chunks.has(chunk_pos):
@@ -89,18 +88,11 @@ func get_tile(world_tile_pos: Vector2i) -> TileCell:
 	
 	var chunk: Chunk = loaded_chunks[chunk_pos]
 	return chunk.get_cell(local_pos)
-
 ## 【全局写方块入口】挖方块、放置方块统一调用
 func set_tile(world_tile_pos: Vector2i, new_cell: TileCell):
-	var cx:int = int( floor( float(world_tile_pos.x) / Chunk.CHUNK_SIZE_X ) )
-	var cy:int = int( floor( float(world_tile_pos.y) / Chunk.CHUNK_SIZE_Y ) )
-	var chunk_pos: Vector2i = Vector2i(cx, cy)
-	
-	# cx,cy 是已经用floor算出来的chunk坐标
-	var lx = world_tile_pos.x - cx * Chunk.CHUNK_SIZE_X
-	var ly = world_tile_pos.y - cy * Chunk.CHUNK_SIZE_Y
-	var local_pos = Vector2i(lx, ly)
-
+	var result = ChunkCoordinateUtils.grid_to_chunk_and_local(world_tile_pos.x, world_tile_pos.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
+	var chunk_pos: Vector2i = result.chunk
+	var local_pos: Vector2i = result.local
 	# 不存在这个区块，先加载生成
 	if not loaded_chunks.has(chunk_pos):
 		var new_chunk: Chunk = Chunk.new()
@@ -111,7 +103,6 @@ func set_tile(world_tile_pos: Vector2i, new_cell: TileCell):
 	
 	var chunk: Chunk = loaded_chunks[chunk_pos]
 	chunk.set_cell(local_pos, new_cell)
-
 ## 直接破坏方块(传入瓦片网格坐标)
 func try_destroy_tile_dir(world_tile_pos: Vector2i) -> void:
 	var target_tile_cell: TileCell = get_tile(world_tile_pos)
@@ -152,7 +143,6 @@ func try_place_tile(global_tile:Vector2i, tile_cell: TileCell = TileCell.new(Til
 	# 放置成功，发出更新信号（复用原来的tile_cell_updated）
 	DebugSystem.console_common_log("World", "方块放置成功 %s" % global_tile)
 	emit_signal("tile_cell_updated", global_tile)
-
 ## 区块卸载：远离玩家的时候调用，释放内存
 func unload_chunk(chunk_pos:Vector2i):
 	if loaded_chunks.has(chunk_pos):
@@ -176,17 +166,21 @@ func get_chunk_all_tiles(chunk_pos:Vector2i) -> Dictionary:
 			var lp = Vector2i(local_x, local_y)
 			output[lp] = chunk.get_cell(lp)
 	return output
-
 ## 统一清理超出距离的区块数据
-func prune_out_of_range_chunks():
+func prune_out_of_range_chunks(p_chunk_pos:Vector2i):
 	var to_remove:Array[Vector2i] = []
 	# 遍历所有已经加载在内存的区块
 	for chunk_pos in loaded_chunks:
 		# 曼哈顿距离，区块坐标之间，计算距离
-		var dist:int = max(abs(chunk_pos.x - player_chunk_pos.x), abs(chunk_pos.y - player_chunk_pos.y))
+		var dist:int = max(abs(chunk_pos.x - p_chunk_pos.x), abs(chunk_pos.y - p_chunk_pos.y))
 		if dist > data_unload_radius:
 			to_remove.append(chunk_pos)
 	
 	# 遍历待删除列表，执行卸载
 	for pos in to_remove:
 		unload_chunk(pos)
+	
+## 外部信号: 更新掉落物信息
+func receive_drop_updated_info(in_uid: int, in_new_position: Vector2, in_linear_velocity: Vector2) -> void:
+	# DebugSystem.console_common_log("世界", "收到掉落物信息: %s %s %s" % [in_uid, in_new_position, in_linear_velocity])
+	drop_info_updated.emit(in_uid, in_new_position, in_linear_velocity)

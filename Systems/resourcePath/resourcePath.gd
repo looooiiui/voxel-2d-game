@@ -10,4 +10,6 @@ static var item_attributes_path: String = "res://Resources/Items/attrubutes/item
 static var tile_cell_instances_path: String = "res://Resources/tileCells/tileCellInstances/tileCellInstances.json"
 static var item_instances_path: String = "res://Resources/Items/ItemInstances/ItemInstances.json"
 ## 材质路径
-static var tile_cell_texture_path: String = "res://Resources/texture/"
+static var tile_cell_texture_path: String = "res://Resources/texture/tileCells/"
+static var item_texture_path: String = "res://Resources/texture/items/"
+static var drop_item_texture_path: String = "res://Resources/texture/dropItems/"

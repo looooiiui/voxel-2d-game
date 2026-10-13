@@ -74,6 +74,7 @@ func _connect_signals() -> void:
 	world.drop_added.connect(drop_bridge.on_drop_added)
 	world.drop_removed.connect(drop_bridge.on_drop_removed)
 	world.drop_apply_force.connect(drop_bridge.on_drop_apply_force)
+	drop_bridge.drop_position_updated.connect(world.receive_drop_updated_info)
 	
 func _physics_process(delta: float) -> void:
 	if !is_render_ready:
@@ -86,7 +87,7 @@ func _physics_process(delta: float) -> void:
 ## 获取玩家坐标
 func get_player_global_tile_pos() -> Vector2i:
 	return player_instance.get_player_grid_pos()
-	
+
 func _render_map() -> void:
 	# 1. 拿到玩家所在全局方块坐标
 	var player_global_tile:Vector2i = get_player_global_tile_pos()
@@ -94,7 +95,7 @@ func _render_map() -> void:
 	var cy:int = int( floor( float(player_global_tile.y) / Chunk.CHUNK_SIZE_Y ) )
 	var new_chunk_pos = Vector2i(cx, cy)
 
-	## 玩家区块生成
+	# 玩家区块生成
 	if new_chunk_pos != player_chunk_pos:
 		player_chunk_pos = new_chunk_pos
 		_render_around_player()

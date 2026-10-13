@@ -4,6 +4,7 @@ extends RefCounted
 class_name Item
 ## 物品静态模板
 var item_instance: ItemInstance
+var current_stack_num: int = 1
 
 ## 初始化：绑定物品模板
 func _init(new_instance: ItemInstance) -> void:
