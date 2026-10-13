@@ -4,7 +4,7 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wvhbo"]
 
-[sub_resource type="CanvasTexture" id="CanvasTexture_wvhbo"]
+[sub_resource type="CanvasTexture" id="CanvasTexture_2ll5h"]
 
 [node name="DropItemEntity" type="RigidBody2D" unique_id=359558003 node_paths=PackedStringArray("collisionShape", "drop_sprite")]
 script = ExtResource("1_2ll5h")
@@ -15,5 +15,5 @@ drop_sprite = NodePath("Sprite")
 shape = SubResource("RectangleShape2D_wvhbo")
 
 [node name="Sprite" type="Sprite2D" parent="." unique_id=1270740249]
-scale = Vector2(32, 32)
-texture = SubResource("CanvasTexture_wvhbo")
+scale = Vector2(0.15625, 0.15625)
+texture = SubResource("CanvasTexture_2ll5h")
