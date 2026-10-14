@@ -14,7 +14,7 @@ func _physics_process(delta: float) -> void:
 	_sync_drop_item_position()
 
 ## 根据世界掉落物管理器发来的消息创建掉落物
-func on_drop_added(drop_data:DropItemInstance):
+func on_drop_added(drop_data:DropItemData):
 	# 新建实体，把drop_data、bridge自身引用传进去
 	var new_entity = drop_entity_scene.instantiate()
 	var drop_entity_script: DropItemEntity = new_entity as DropItemEntity
@@ -50,7 +50,9 @@ func on_drop_apply_force(uid:int, force:Vector2):
 ## 向外同步掉落物位置	
 func _sync_drop_item_position() -> void:
 	for uid in entity_map:
-		var entity = entity_map.get(uid)
-		if entity == null:
-			DebugSystem.console_warn_log("渲染桥", "key: %s 不存在" % uid)
+		var entity = entity_map[uid]
+		if not entity.is_inside_tree():
+			DebugSystem.console_warn_log("掉落桥", "uid=%d 节点已经不在场景树" % uid)
+			entity_map.erase(uid)
+			continue
 		emit_signal("drop_position_updated", uid, entity.global_position, entity.linear_velocity)

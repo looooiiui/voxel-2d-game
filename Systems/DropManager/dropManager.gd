@@ -10,15 +10,15 @@ enum DropDestroyReason {
 	PICKUP = 1
 }
  
-## 掉落物 ID
-var _uid_counter:int = 0
-## 映射: uid -> DropInstance
+## 映射: uid -> DropItemData
 var drop_dict:Dictionary = {}
 
-# 回调委托，由World传入
+## 回调委托，由World传入
 var on_drop_added: Callable
 var on_drop_removed: Callable
 var on_drop_apply_force: Callable
+var on_entity_add: Callable
+var on_entity_destroy: Callable
 
 var PICKUP_RANGE: float = CoordinateAttributes.get_coordinate_distance() * 4
 var ABSORB_SPEED: float = 1200 * 60
@@ -26,15 +26,15 @@ var PICKUP_THRESHOLD: float = CoordinateAttributes.get_coordinate_distance() * 1
 var DROP_LIFETIME: float = 300
 
 ## 生成掉落物
-func spawn(item:Item, spawn_pos:Vector2, world_time:float, spawn_vel:Vector2=Vector2.ZERO) -> void:
-	var new_uid = _uid_counter
-	_uid_counter += 1
-	var new_drop = DropItemInstance.new(new_uid, item, spawn_pos, world_time)
+func spawn(new_uid: int, item:Item, spawn_pos:Vector2, world_time:float, spawn_vel:Vector2=Vector2.ZERO) -> void:
+	var new_drop = EntitySpawner.spawn_drop_item(new_uid, item, spawn_pos, world_time)
 	new_drop.velocity = spawn_vel
-	drop_dict[new_uid] = new_drop
-	DebugSystem.console_common_log("世界[掉落物管理器]", "生成掉落物: uid: %s , 物品: %s, 对应名字: %s" % [new_uid, item, item.get_item_instance().get_item_name()])
+	drop_dict[new_drop.uid] = new_drop
+	DebugSystem.console_common_log("世界[掉落物管理器]", "生成掉落物: uid: %s , 物品: %s, 对应名字: %s" % [new_drop.uid, item, item.get_item_instance().get_item_name()])
+	if on_entity_add.is_valid():
+		on_entity_add.call(new_drop)
 	# 回调给World
-	if on_drop_added != null:
+	if on_drop_added.is_valid():
 		on_drop_added.call(new_drop)
 
 ## 单物品自持监测掉落物清除以及掉落物操作
@@ -43,7 +43,7 @@ func tick(delta:float, world_time:float, player_pixel_pos:Vector2) -> void:
 	var to_remove_nature: Array[int] = []
 	var to_remove_pick_up: Array[int] = []
 	for uid in drop_dict:
-		var drop:DropItemInstance = drop_dict[uid]
+		var drop:DropItemData = drop_dict[uid]
 		# 已经进入删除组的越过判断
 		if drop.is_pending_remove:
 			continue
@@ -72,21 +72,37 @@ func tick(delta:float, world_time:float, player_pixel_pos:Vector2) -> void:
 	for uid in to_remove_nature:
 		# 先传出对应Item
 		if on_drop_removed.is_valid():
-			var drop_instance: DropItemInstance = drop_dict.get(uid)
+			var drop_instance: DropItemData = drop_dict.get(uid)
 			on_drop_removed.call(uid, drop_instance.item, DropDestroyReason.NATURE)
+			if on_entity_destroy.is_valid():
+				on_entity_destroy.call(uid, drop_instance.entity_type)
 		drop_dict.erase(uid)
 	
 	# 拾取状态清理	
 	for uid in to_remove_pick_up:
 		# 先传出对应Item
-		if on_drop_removed != null:
-			var drop_instance: DropItemInstance = drop_dict.get(uid)
+		if on_drop_removed.is_valid():
+			var drop_instance: DropItemData = drop_dict.get(uid)
 			on_drop_removed.call(uid, drop_instance.item, DropDestroyReason.PICKUP)
+			if on_entity_destroy.is_valid():
+				on_entity_destroy.call(uid, drop_instance.entity_type)
 		drop_dict.erase(uid)
-			
+
+## 手动通过 uid 清除掉落物
+func manual_remove_drop(uid:int, reason:DropDestroyReason):
+	if not drop_dict.has(uid):
+		return
+	var drop = drop_dict[uid]
+	drop.is_pending_remove = true
+	if on_drop_removed.is_valid():
+		on_drop_removed.call(uid, drop.item, reason)
+	if on_entity_destroy.is_valid():
+		on_entity_destroy.call(uid, drop.entity_type)
+	drop_dict.erase(uid)
+
 ## 世界信号: 更新掉落物信息
 func updated_drop_info(uid: int, new_position: Vector2, in_linear_velocity: Vector2) -> void:
-	var drop_instance: DropItemInstance = drop_dict.get(uid)
+	var drop_instance: DropItemData = drop_dict.get(uid)
 	if drop_instance == null:
 		## DebugSystem.console_warn_log("世界[掉落物管理器]", "掉落物[uid]: %s 不存在" % uid)
 		return

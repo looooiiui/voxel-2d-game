@@ -1,7 +1,7 @@
 extends Node2D
 
 # 主节点
-@export var player_instance: player
+@export var player_instance: PlayerEntity
 @export var tile_map_layer: TileMapLayer
 @export var player_input_control: InputController
 @export var drop_bridge: DropBridge
@@ -11,7 +11,9 @@ var render_bridge: RenderBridge
 var world: World
 var player_chunk_pos:Vector2i
 var render_distance: int = 1   # 1 = 3x3 区域，2 = 5x5 区域
-# 玩家所在区块
+## 玩家
+var player_data: PlayerData
+## 玩家所在区块
 var is_render_ready: bool = true
 
 # 保存当前已经绘制在TileMap上的区块
@@ -32,7 +34,8 @@ func _ready() -> void:
 	DebugSystem.console_common_log("核心节点", "创建世界: %s" % world)
 	# 注入节点给玩家控制
 	player_input_control.camera = camera
-	
+	# 生成玩家
+	_create_player()
 	# 测试所需核心是否加载
 	_debug_start()
 	render_bridge.world = world
@@ -52,6 +55,17 @@ func _item_load() -> void:
 	ItemAttribute.reset_counter()
 	ItemAttributes.load_mapping_attributes()
 	ItemInstances.load_mapping_instance()
+
+## 创建并加入玩家
+func _create_player() -> void:
+	# 申请世界创建实体
+	var new_uid = world.get_new_uid()
+	player_data = EntitySpawner.spawn_player(new_uid)
+	world.add_new_entity(player_data)
+	DebugSystem.console_common_log("核心节点", "创建玩家数据: %s" % player_data)
+	# 同步玩家实体与数据
+	player_instance.setup(player_data)
+	DebugSystem.console_common_log("核心节点", "同步玩家数据: %s 到 %s" % [player_data, player_instance])
 
 ## 世界加载
 func _load_world() -> void:
@@ -82,11 +96,11 @@ func _physics_process(delta: float) -> void:
 	_render_map()
 	
 	# 向世界提供主循环
-	world.tick_world(delta, player_instance.get_player_grid_pos(), player_instance.get_player_global_pos())
+	world.tick_world(delta, player_data.get_player_grid_pos(), player_data.get_player_global_pos())
 		
 ## 获取玩家坐标
 func get_player_global_tile_pos() -> Vector2i:
-	return player_instance.get_player_grid_pos()
+	return player_data.get_player_grid_pos()
 
 func _render_map() -> void:
 	# 1. 拿到玩家所在全局方块坐标
@@ -140,7 +154,7 @@ func _debug_start() -> void:
 	else:
 		DebugSystem.console_error_log("核心节点", "世界本体不存在")
 		is_render_ready = false
-	if player_instance != null:
+	if player_data != null:
 		DebugSystem.console_common_log("核心节点", "玩家存在")
 	else:
 		DebugSystem.console_error_log("核心节点", "玩家不存在")

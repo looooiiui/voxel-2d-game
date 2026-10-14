@@ -1,19 +1,25 @@
 extends CharacterBody2D
 
-class_name player
+## 玩家节点持有的代码
+class_name PlayerEntity
 
-const SPEED = 300.0
-const JUMP_VELOCITY = -400.0
-var grid_pos: Vector2i = Vector2i(0, 0)
+var player_data: PlayerData
 
+## 设置玩家数据
+func setup(new_player_data: PlayerData):
+	player_data = new_player_data
+
+## 主循环，同步玩家数据等
 func _physics_process(delta: float) -> void:
-	_sync_grid_pos()
+	if player_data == null:
+		return 
+	_sync_data()
 	_player_move(delta)
 	move_and_slide()
 	
 ## 同步网格坐标
-func _sync_grid_pos() -> void:
-	grid_pos = CoordinateAttributes.cal_current_grid_pos(global_position.x, global_position.y)
+func _sync_data() -> void:
+	player_data.sync_data(global_position)
 
 ## 移动逻辑
 func _player_move(delta: float) -> void:
@@ -23,20 +29,13 @@ func _player_move(delta: float) -> void:
 
 	# Handle jump.
 	if Input.is_action_just_pressed("jump"):
-		velocity.y = JUMP_VELOCITY
+		velocity.y = player_data.jump_velocity
 
 	# Get the input direction and handle the movement/deceleration.
 	# As good practice, you should replace UI actions with custom gameplay actions.
 	var direction := Input.get_axis("left", "right")
 	if direction:
-		velocity.x = direction * SPEED
+		velocity.x = direction * player_data.move_speed
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0, player_data.move_speed)
 		
-## 获得玩家坐标
-func get_player_grid_pos() -> Vector2i:
-	return grid_pos
-	
-## 获得玩家浮点坐标
-func get_player_global_pos() -> Vector2:
-	return global_position

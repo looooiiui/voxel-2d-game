@@ -5,7 +5,7 @@ signal tile_cell_updated(global_tile_pos:Vector2i)
 ## 世界数据变更
 signal gravity_updated(new_gravity:float)
 # World对外暴露信号，DropBridge监听这一组
-signal drop_added(new_drop:DropItemInstance)
+signal drop_added(new_drop:DropItemData)
 signal drop_removed(uid:int, item: Item, remove_reason: DropManager.DropDestroyReason)
 signal drop_apply_force(uid:int, absorb_force: Vector2)
 signal drop_info_updated(uid: int, new_position: Vector2, linear_velocity: Vector2)
@@ -14,6 +14,7 @@ var seed: int
 var gravity:float = 980
 var world_time:float = 0.0
 var drop_manager:DropManager
+var entity_storage: EntityStorage
 # 区块清理
 var chunk_prune_timer:float = 0.0
 const PRUNE_INTERVAL:float = 2 # 2秒扫描一次区块，可调整
@@ -30,16 +31,21 @@ func _init(p_seed) -> void:
 	seed = p_seed
 	terrain_generator = TerrainGenerator.new(seed)
 	DebugSystem.console_common_log("世界", "创建世界,种子: %s" % seed)
-	# 创建掉落物
+	# 创建掉落物与实例查询分配器
 	drop_manager = DropManager.new()
+	entity_storage = EntityStorage.new()
 	DebugSystem.console_common_log("世界", "生成掉落物管理器: %s" % drop_manager)
+	DebugSystem.console_common_log("世界", "生成实体分配器: %s" % entity_storage)
 	# 注入回调：DropManager内部事件，调用World的信号发射
 	drop_manager.on_drop_added = drop_added.emit
 	drop_manager.on_drop_removed = drop_removed.emit
 	drop_manager.on_drop_apply_force = drop_apply_force.emit
+	drop_manager.on_entity_add = add_new_entity
+	drop_manager.on_entity_destroy = despawn_entity
 	
 	## 内部管理器连接
 	drop_info_updated.connect(drop_manager.updated_drop_info)
+	
 	
 ## 世界数据需要外接的计时器，本框架对接核心脚本
 func tick_world(delta:float, player_grid_pos:Vector2i, player_pixel_pos:Vector2) -> void:
@@ -52,7 +58,17 @@ func tick_world(delta:float, player_grid_pos:Vector2i, player_pixel_pos:Vector2)
 		prune_out_of_range_chunks(player_chunk_pos)
 		chunk_prune_timer = 0.0
 		DebugSystem.console_common_log("世界", "当前时间: %s" % world_time)
-	
+
+## 获得新的实体 uid
+func get_new_uid() -> int:
+	return entity_storage.allocate_uid()	
+## 添加新的实体
+func add_new_entity(new_entity: EntityBase) -> void:
+	entity_storage.add_entity(new_entity)
+## 去除实体
+func despawn_entity(uid:int, type:EntityBase.EntityType):
+	entity_storage.remove_entity(uid, type)
+
 ## 设置重力,通知外部世界重力发生改变
 func set_gravity(new_val:float):
 	if new_val < 0: return
@@ -124,8 +140,10 @@ func try_destroy_tile_dir(world_tile_pos: Vector2i) -> void:
 	var spawn_velocity = Vector2(0, -80)
 	# 获取挖掘方块对应的物品实例
 	var drop_item: Item = MappingTool.tile_instance_to_item(target_tile_cell.get_cell_instance())
+	if drop_item == null:
+		return
 	# drop_manager由World持有，只有World能调用spawn
-	drop_manager.spawn(drop_item, tile_center, world_time, spawn_velocity)
+	drop_manager.spawn(entity_storage.allocate_uid(), drop_item, tile_center, world_time, spawn_velocity)
 	
 ## 放置方块
 func try_place_tile(global_tile:Vector2i, tile_cell: TileCell = TileCell.new(TileCellInstances.OriginalInstancesType.get("stone"))) -> void:
@@ -143,6 +161,7 @@ func try_place_tile(global_tile:Vector2i, tile_cell: TileCell = TileCell.new(Til
 	# 放置成功，发出更新信号（复用原来的tile_cell_updated）
 	DebugSystem.console_common_log("World", "方块放置成功 %s" % global_tile)
 	emit_signal("tile_cell_updated", global_tile)
+
 ## 区块卸载：远离玩家的时候调用，释放内存
 func unload_chunk(chunk_pos:Vector2i):
 	if loaded_chunks.has(chunk_pos):
@@ -166,6 +185,7 @@ func get_chunk_all_tiles(chunk_pos:Vector2i) -> Dictionary:
 			var lp = Vector2i(local_x, local_y)
 			output[lp] = chunk.get_cell(lp)
 	return output
+	
 ## 统一清理超出距离的区块数据
 func prune_out_of_range_chunks(p_chunk_pos:Vector2i):
 	var to_remove:Array[Vector2i] = []
@@ -179,7 +199,7 @@ func prune_out_of_range_chunks(p_chunk_pos:Vector2i):
 	# 遍历待删除列表，执行卸载
 	for pos in to_remove:
 		unload_chunk(pos)
-	
+
 ## 外部信号: 更新掉落物信息
 func receive_drop_updated_info(in_uid: int, in_new_position: Vector2, in_linear_velocity: Vector2) -> void:
 	# DebugSystem.console_common_log("世界", "收到掉落物信息: %s %s %s" % [in_uid, in_new_position, in_linear_velocity])

@@ -1,9 +1,9 @@
-extends RefCounted
+## 继承于实体基类
+extends EntityBase
 
 ## 掉落物【数据实例】，只保存状态，无tick逻辑，业务交给DropManager
-class_name DropItemInstance
+class_name DropItemData
 # 唯一编号，实例构造时分配
-var uid: int
 var item: Item
 var world_pos: Vector2
 var velocity: Vector2 = Vector2.ZERO
@@ -16,3 +16,5 @@ func _init(new_uid:int, new_item:Item, start_pos:Vector2, current_world_time:flo
 	item = new_item
 	world_pos = start_pos
 	spawn_time = current_world_time
+	# 初始化类型
+	entity_type = EntityBase.EntityType.DROP_ITEM
