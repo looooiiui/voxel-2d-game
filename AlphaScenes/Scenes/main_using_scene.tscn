@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://ctoytwllkrvgi" path="res://AlphaScenes/Codes/main_using_scene.gd" id="1_3lpbi"]
 [ext_resource type="PackedScene" uid="uid://csu3kv2gsd8eo" path="res://AlphaScenes/Scenes/using_player.tscn" id="2_eqcjx"]
-[ext_resource type="Texture2D" uid="uid://dqle4qciqmdpp" path="res://Resources/texture/tileCells/stone1.png" id="2_g6fif"]
-[ext_resource type="Texture2D" uid="uid://behe07vg67f8v" path="res://Resources/texture/tileCells/stone.png" id="3_h8sox"]
+[ext_resource type="Texture2D" uid="uid://nm7tgaopsjup" path="res://Resources/texture/tileCells/stone.png" id="2_g6fif"]
+[ext_resource type="Texture2D" uid="uid://dunnk32rjggvk" path="res://Resources/texture/tileCells/air.png" id="3_h8sox"]
 [ext_resource type="PackedScene" uid="uid://csmojgbyo8fvb" path="res://Scenes/Players/Player/player.tscn" id="6_wil0y"]
 [ext_resource type="PackedScene" uid="uid://b6m0ir133wokq" path="res://Scenes/Cameras/Camera/global_camera.tscn" id="7_g6fif"]
 [ext_resource type="PackedScene" uid="uid://bnbuqyo0400sx" path="res://Systems/playerInput/player_input.tscn" id="7_h8sox"]
@@ -46,7 +46,7 @@ position = Vector2(353, 224)
 [node name="Player" parent="." unique_id=71195304 instance=ExtResource("6_wil0y")]
 
 [node name="GlobalCamera" parent="." unique_id=675677074 node_paths=PackedStringArray("followCase") instance=ExtResource("7_g6fif")]
-followCase = NodePath("../Player")
+followCase = NodePath("../UsingPlayer")
 
 [node name="PlayerInputControl" parent="." unique_id=1230397966 instance=ExtResource("7_h8sox")]
 

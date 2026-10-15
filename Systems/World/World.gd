@@ -27,6 +27,7 @@ var data_unload_radius: int = 5
 var player_chunk_pos:Vector2i = Vector2i.ZERO
 # 保存当前已经绘制在TileMap上的区块
 var rendered_chunks:Dictionary = {}
+
 func _init(p_seed) -> void:
 	seed = p_seed
 	terrain_generator = TerrainGenerator.new(seed)
@@ -36,16 +37,10 @@ func _init(p_seed) -> void:
 	entity_storage = EntityStorage.new()
 	DebugSystem.console_common_log("世界", "生成掉落物管理器: %s" % drop_manager)
 	DebugSystem.console_common_log("世界", "生成实体分配器: %s" % entity_storage)
-	# 注入回调：DropManager内部事件，调用World的信号发射
-	drop_manager.on_drop_added = drop_added.emit
-	drop_manager.on_drop_removed = drop_removed.emit
-	drop_manager.on_drop_apply_force = drop_apply_force.emit
-	drop_manager.on_entity_add = add_new_entity
-	drop_manager.on_entity_destroy = despawn_entity
 	
 	## 内部管理器连接
 	drop_info_updated.connect(drop_manager.updated_drop_info)
-	
+	_connect_inner_signal()
 	
 ## 世界数据需要外接的计时器，本框架对接核心脚本
 func tick_world(delta:float, player_grid_pos:Vector2i, player_pixel_pos:Vector2) -> void:
@@ -104,6 +99,7 @@ func get_tile(world_tile_pos: Vector2i) -> TileCell:
 	
 	var chunk: Chunk = loaded_chunks[chunk_pos]
 	return chunk.get_cell(local_pos)
+	
 ## 【全局写方块入口】挖方块、放置方块统一调用
 func set_tile(world_tile_pos: Vector2i, new_cell: TileCell):
 	var result = ChunkCoordinateUtils.grid_to_chunk_and_local(world_tile_pos.x, world_tile_pos.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
@@ -119,6 +115,7 @@ func set_tile(world_tile_pos: Vector2i, new_cell: TileCell):
 	
 	var chunk: Chunk = loaded_chunks[chunk_pos]
 	chunk.set_cell(local_pos, new_cell)
+	
 ## 直接破坏方块(传入瓦片网格坐标)
 func try_destroy_tile_dir(world_tile_pos: Vector2i) -> void:
 	var target_tile_cell: TileCell = get_tile(world_tile_pos)
@@ -204,3 +201,29 @@ func prune_out_of_range_chunks(p_chunk_pos:Vector2i):
 func receive_drop_updated_info(in_uid: int, in_new_position: Vector2, in_linear_velocity: Vector2) -> void:
 	# DebugSystem.console_common_log("世界", "收到掉落物信息: %s %s %s" % [in_uid, in_new_position, in_linear_velocity])
 	drop_info_updated.emit(in_uid, in_new_position, in_linear_velocity)
+
+## 内部信号连接
+func _connect_inner_signal() -> void:
+	# 注入回调：DropManager内部事件，调用World的信号发射
+	drop_manager.on_drop_added.connect(_drop_added_connect)
+	drop_manager.on_drop_removed.connect(_drop_removed_connect)
+	drop_manager.on_drop_apply_force.connect(_drop_apply_force_connect)
+	drop_manager.on_entity_add.connect(_add_drop_entity_connect)
+	drop_manager.on_entity_destroy.connect(_despawn_entity_connect)
+	
+## World内部信号转发以及通讯
+## 掉落物信号添加连接
+func _drop_added_connect(new_drop:DropItemData) -> void:
+	drop_added.emit(new_drop)
+## 掉落物信号移除连接
+func _drop_removed_connect(uid:int, item: Item, remove_reason: DropManager.DropDestroyReason) -> void:
+	drop_removed.emit(uid, item, remove_reason)
+## 掉落物添加力的连接
+func _drop_apply_force_connect(uid:int, absorb_force: Vector2) -> void:
+	drop_apply_force.emit(uid, absorb_force)
+## 掉落物实体添加，由内置掉落物管理器请求
+func _add_drop_entity_connect(new_drop: DropItemData) -> void:
+	add_new_entity(new_drop)
+## 掉落物
+func _despawn_entity_connect(uid:int, type:EntityBase.EntityType) -> void:
+	despawn_entity(uid, type)
