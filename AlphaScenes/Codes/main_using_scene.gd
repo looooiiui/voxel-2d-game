@@ -11,11 +11,8 @@ var render_bridge: RenderBridge
 var world: World
 var player_chunk_pos:Vector2i
 var render_distance: int = 1   # 1 = 3x3 区域，2 = 5x5 区域
-## 玩家
-var player_data: PlayerData
 ## 玩家所在区块
 var is_render_ready: bool = true
-
 # 保存当前已经绘制在TileMap上的区块
 var rendered_chunks:Dictionary = {}
 
@@ -41,7 +38,7 @@ func _ready() -> void:
 	render_bridge.world = world
 	if is_render_ready:
 		_connect_signals()
-		_render_around_player()
+		_render_map()
 		_set_world()
 		
 ## 瓦片加载
@@ -60,12 +57,12 @@ func _item_load() -> void:
 func _create_player() -> void:
 	# 申请世界创建实体
 	var new_uid = world.get_new_uid()
-	player_data = EntitySpawner.spawn_player(new_uid)
-	world.add_new_entity(player_data)
-	DebugSystem.console_common_log("核心节点", "创建玩家数据: %s" % player_data)
-	# 同步玩家实体与数据
-	player_instance.setup(player_data)
-	DebugSystem.console_common_log("核心节点", "同步玩家数据: %s 到 %s" % [player_data, player_instance])
+	var temp_player_data = EntitySpawner.spawn_player(new_uid)
+	world.add_new_entity(temp_player_data)
+	DebugSystem.console_common_log("核心节点", "创建玩家数据: %s" % temp_player_data)
+	# 同步玩家实体与数据：PlayerEntity视图节点持有，DI本身不持有
+	player_instance.setup(temp_player_data)
+	DebugSystem.console_common_log("核心节点", "同步玩家数据: %s 到 %s" % [temp_player_data, player_instance])
 
 ## 世界加载
 func _load_world() -> void:
@@ -96,50 +93,57 @@ func _physics_process(delta: float) -> void:
 	_render_map()
 	
 	# 向世界提供主循环
-	world.tick_world(delta, player_data.get_player_grid_pos(), player_data.get_player_global_pos())
-		
-## 获取玩家坐标
-func get_player_global_tile_pos() -> Vector2i:
-	return player_data.get_player_grid_pos()
+	world.tick_world(delta)
 
+## 多人完整区块渲染
 func _render_map() -> void:
-	# 1. 拿到玩家所在全局方块坐标
-	var player_global_tile:Vector2i = get_player_global_tile_pos()
-	var cx:int = int( floor( float(player_global_tile.x) / Chunk.CHUNK_SIZE_X ) )
-	var cy:int = int( floor( float(player_global_tile.y) / Chunk.CHUNK_SIZE_Y ) )
-	var new_chunk_pos = Vector2i(cx, cy)
-
-	# 玩家区块生成
-	if new_chunk_pos != player_chunk_pos:
-		player_chunk_pos = new_chunk_pos
-		_render_around_player()
-
-## 渲染玩家周围的方块(范围渲染)
-func _render_around_player():
+	# 从世界实体存储器拿到全部玩家数据
+	var player_dict = world.entity_storage.get_all_players()
 	var target_chunks:Dictionary = {}
-	# 1. 先算出这一帧需要的所有目标区块
-	for dx in range(-render_distance, render_distance + 1):
-		for dy in range(-render_distance, render_distance + 1):
-			var chunk_pos = Vector2i(
-				player_chunk_pos.x + dx,
-				player_chunk_pos.y + dy
-			)
-			target_chunks[chunk_pos] = true
 	
-	# 2. 清除【旧有，但不在新列表】的区块
+	# 遍历所有玩家，各自生成周围区块，自动合并去重
+	for uid in player_dict:
+		var p_data:PlayerData = player_dict[uid]
+		var tile_pos:Vector2i = p_data.get_player_grid_pos()
+		var cx:int = int( floor( float(tile_pos.x) / Chunk.CHUNK_SIZE_X ) )
+		var cy:int = int( floor( float(tile_pos.y) / Chunk.CHUNK_SIZE_Y ) )
+		var chunk_center = Vector2i(cx, cy)
+		
+		# 当前玩家render_distance范围区块
+		for dx in range(-render_distance, render_distance + 1):
+			for dy in range(-render_distance, render_distance + 1):
+				var c_pos = Vector2i(chunk_center.x + dx, chunk_center.y + dy)
+				target_chunks[c_pos] = true # 字典key自动去重
+	
+	# 和上一帧渲染区块对比，加载/卸载，原有逻辑原样保留
+	var need_refresh:bool = false
+	# 判断集合是否变化
+	if target_chunks.size() != rendered_chunks.size():
+		need_refresh = true
+	else:
+		for old_c in rendered_chunks:
+			if !target_chunks.has(old_c):
+				need_refresh = true
+				break
+	
+	if need_refresh:
+		_render_around_player(target_chunks)
+
+# 重载，接收合并后的目标区块字典
+func _render_around_player(target_chunks:Dictionary):
+	# 清除旧区块
 	for old_chunk in rendered_chunks:
 		if !target_chunks.has(old_chunk):
 			render_bridge.clear_chunk_render(old_chunk)
 			rendered_chunks.erase(old_chunk)
-	
-	# 3. 绘制【新列表里面还没渲染的区块】
+	# 新增区块
 	for new_chunk in target_chunks:
 		if !rendered_chunks.has(new_chunk):
 			render_bridge.render_chunk(new_chunk)
 			rendered_chunks[new_chunk] = true
 	
-	## 维护区块输出
-	## DebugSystem.console_common_log("测试世界", "当前维护区块: %s" % rendered_chunks)
+	# 维护区块输出
+	# DebugSystem.console_common_log("测试世界", "当前维护区块: %s" % rendered_chunks)
 
 ## 检查各项参数
 func _debug_start() -> void:
@@ -153,11 +157,6 @@ func _debug_start() -> void:
 		DebugSystem.console_common_log("核心节点", "世界本体存在")
 	else:
 		DebugSystem.console_error_log("核心节点", "世界本体不存在")
-		is_render_ready = false
-	if player_data != null:
-		DebugSystem.console_common_log("核心节点", "玩家存在")
-	else:
-		DebugSystem.console_error_log("核心节点", "玩家不存在")
 		is_render_ready = false
 	## 显示渲染状态
 	DebugSystem.console_common_log("核心节点", "渲染状态: %s" % is_render_ready)

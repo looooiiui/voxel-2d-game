@@ -16,8 +16,10 @@ func add_entity(entity:EntityBase) -> void:
 	match entity.entity_type:
 		EntityBase.EntityType.PLAYER:
 			players[entity.uid] = entity
+			DebugSystem.console_common_log("世界[实体管理查询器]", "当前玩家实体表: %s" % players)
 		EntityBase.EntityType.DROP_ITEM:
 			drops[entity.uid] = entity
+			DebugSystem.console_common_log("世界[实体管理查询器]", "当前物品实体表: %s" % drops)
 	entity_spawned.emit(entity.uid, entity)
 	
 ## 分配并获取下一个可用UID（新建实体调用）
@@ -25,6 +27,10 @@ func allocate_uid() -> int:
 	var ret = next_uid
 	next_uid += 1
 	return ret
+
+## 获得所有玩家实体(返回实体表)
+func get_all_players() -> Dictionary:
+	return players
 
 ## 查询接口
 ## 获得玩家实体

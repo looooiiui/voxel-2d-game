@@ -29,6 +29,10 @@ func _init(new_id: int, new_stack: int = DEFAULT_STACK) -> void:
 	
 	max_stack = new_stack
 
+## 获得最大堆叠数量
+func get_max_stack_num() -> int:
+	return max_stack
+
 ## 重置注册表ID
 static func reset_counter():
 	current_num = 0

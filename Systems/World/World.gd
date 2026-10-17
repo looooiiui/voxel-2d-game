@@ -25,8 +25,6 @@ var loaded_chunks: Dictionary[Vector2i, Chunk] = {}
 var data_unload_radius: int = 5
 # 玩家区块坐标，由外部每一帧写入玩家网格坐标后计算（World本身不持有player节点）
 var player_chunk_pos:Vector2i = Vector2i.ZERO
-# 保存当前已经绘制在TileMap上的区块
-var rendered_chunks:Dictionary = {}
 
 func _init(p_seed) -> void:
 	seed = p_seed
@@ -43,16 +41,31 @@ func _init(p_seed) -> void:
 	_connect_inner_signal()
 	
 ## 世界数据需要外接的计时器，本框架对接核心脚本
-func tick_world(delta:float, player_grid_pos:Vector2i, player_pixel_pos:Vector2) -> void:
-	world_time += delta
-	sync_chunk_pos(player_grid_pos)
-	drop_manager.tick(delta, world_time, player_pixel_pos)
-	chunk_prune_timer += delta
+func tick_world(delta:float) -> void:
+	var player_dict = entity_storage.get_all_players()
+	# 所有玩家网格位置坐标数组
+	# 所有玩家区块坐标数组
+	var all_player_grid_positions:Array[Vector2i] = []
+	var all_player_chunk_pos:Array[Vector2i] = []
 	
+	# 遍历全部玩家，收集网格坐标 + 区块坐标
+	for uid in player_dict:
+		var player_entity_data = player_dict[uid] as PlayerData
+		var grid_pos = player_entity_data.get_player_grid_pos()
+		all_player_grid_positions.append(grid_pos)
+		# 算出该玩家所在区块坐标
+		var chunk_pos = ChunkCoordinateUtils.grid_to_chunk(grid_pos.x, grid_pos.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
+		all_player_chunk_pos.append(chunk_pos)
+		
+	drop_manager.tick(delta, world_time, player_dict)
+	# ========= 区块清理计时器，现在传入【全部玩家区块数组】 =========
+	chunk_prune_timer += delta
 	if chunk_prune_timer >= PRUNE_INTERVAL:
-		prune_out_of_range_chunks(player_chunk_pos)
+		prune_out_of_range_chunks(all_player_chunk_pos)
 		chunk_prune_timer = 0.0
-		DebugSystem.console_common_log("世界", "当前时间: %s" % world_time)
+		DebugSystem.console_common_log("世界", "执行区块卸载，世界时间: %s" % world_time)
+	
+	world_time += delta
 
 ## 获得新的实体 uid
 func get_new_uid() -> int:
@@ -69,12 +82,7 @@ func set_gravity(new_val:float):
 	if new_val < 0: return
 	gravity = new_val
 	DebugSystem.console_common_log("世界", "设置重力: %s" % gravity)
-	emit_signal("gravity_updated", gravity)	
-## 同步玩家所在区块坐标
-func sync_chunk_pos(player_grid_position:Vector2i) -> void:
-	# tick内自行计算玩家所在区块坐标
-	var result = ChunkCoordinateUtils.grid_to_chunk(player_grid_position.x, player_grid_position.y, Chunk.CHUNK_SIZE_X, Chunk.CHUNK_SIZE_Y)
-	player_chunk_pos = result
+	emit_signal("gravity_updated", gravity)
 	
 ## 【全局读方块入口】整个游戏读取方块统一调用这个
 ## world_tile_pos：全局瓦片坐标（一格=32像素）
@@ -183,17 +191,23 @@ func get_chunk_all_tiles(chunk_pos:Vector2i) -> Dictionary:
 			output[lp] = chunk.get_cell(lp)
 	return output
 	
-## 统一清理超出距离的区块数据
-func prune_out_of_range_chunks(p_chunk_pos:Vector2i):
+## 统一清理超出距离的区块数据，多人位置数组
+func prune_out_of_range_chunks(player_chunk_pos_list:Array[Vector2i]):
 	var to_remove:Array[Vector2i] = []
-	# 遍历所有已经加载在内存的区块
-	for chunk_pos in loaded_chunks:
-		# 曼哈顿距离，区块坐标之间，计算距离
-		var dist:int = max(abs(chunk_pos.x - p_chunk_pos.x), abs(chunk_pos.y - p_chunk_pos.y))
-		if dist > data_unload_radius:
-			to_remove.append(chunk_pos)
+	# 遍历所有已经加载在内存的逻辑区块
+	for loaded_chunk_pos in loaded_chunks:
+		var keep_chunk:bool = false
+		# 判断：只要距离任意一名玩家在卸载半径内 → 保留区块
+		for p_chunk in player_chunk_pos_list:
+			var dist:int = max(abs(loaded_chunk_pos.x - p_chunk.x), abs(loaded_chunk_pos.y - p_chunk.y))
+			if dist <= data_unload_radius:
+				keep_chunk = true
+				break
+		# 所有玩家都离这个区块很远 → 标记卸载
+		if not keep_chunk:
+			to_remove.append(loaded_chunk_pos)
 	
-	# 遍历待删除列表，执行卸载
+	# 执行卸载
 	for pos in to_remove:
 		unload_chunk(pos)
 

@@ -2,7 +2,6 @@ extends CharacterBody2D
 
 ## 玩家节点持有的代码
 class_name PlayerEntity
-
 var player_data: PlayerData
 
 ## 设置玩家数据
@@ -13,9 +12,9 @@ func setup(new_player_data: PlayerData):
 func _physics_process(delta: float) -> void:
 	if player_data == null:
 		return 
-	_sync_data()
 	_player_move(delta)
 	move_and_slide()
+	_sync_data()
 	
 ## 同步网格坐标
 func _sync_data() -> void:

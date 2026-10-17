@@ -11,7 +11,7 @@ func _init(tile_map: TileMapLayer) -> void:
 
 ## 渲染单个区块：输入区块坐标Vector2i
 func render_chunk(chunk_pos:Vector2i):
-	DebugSystem.console_common_log("渲染器", "渲染区块输入坐标(新渲染): %s" % chunk_pos)
+	# DebugSystem.console_common_log("渲染器", "渲染区块输入坐标(新渲染): %s" % chunk_pos)
 	# 遍历区块内全部local坐标 x:0~31，y:0~255
 	for local_x in range(Chunk.CHUNK_SIZE_X):
 		for local_y in range(Chunk.CHUNK_SIZE_Y):

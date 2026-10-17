@@ -29,3 +29,18 @@ func get_item_instance() -> ItemInstance:
 func copy() -> Item:
 	var new_item = Item.new(item_instance)
 	return new_item
+
+## 判断是否是同一种物品：比对 ItemInstance 引用，只有完全相同实例才能堆叠
+func is_same_item(other: Item) -> bool:
+	if other == null:
+		return false
+	# 直接对比ItemInstance引用，这才是物品/方块的本体模板
+	return self.item_instance == other.item_instance
+
+## 获得当前堆叠数量
+func get_current_stack_num() -> int:
+	return current_stack_num
+	
+## 更改堆叠数量
+func change_stack_num(new_stack: int) -> void:
+	current_stack_num = new_stack

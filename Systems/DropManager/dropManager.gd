@@ -15,7 +15,7 @@ var drop_dict:Dictionary = {}
 
 ## 回调委托，由World传入
 signal on_drop_added(new_drop: DropItemData)
-signal on_drop_removed(uid: int, destory: DropDestroyReason)
+signal on_drop_removed(uid: int, item: Item, destory: DropDestroyReason)
 signal on_drop_apply_force(uid: int, absorb_force: Vector2)
 signal on_entity_add(new_drop: DropItemData)
 signal on_entity_destroy(uid: int, entity_type: EntityBase.EntityType)
@@ -37,47 +37,87 @@ func spawn(new_uid: int, item:Item, spawn_pos:Vector2, world_time:float, spawn_v
 
 ## 单物品自持监测掉落物清除以及掉落物操作
 ## 主要是tick时间，是掉落物计数器
-func tick(delta:float, world_time:float, player_pixel_pos:Vector2) -> void:
+func tick(delta:float, world_time:float, player_dict:Dictionary) -> void:
 	var to_remove_nature: Array[int] = []
 	var to_remove_pick_up: Array[int] = []
+	
+	# 遍历所有玩家
 	for uid in drop_dict:
 		var drop:DropItemData = drop_dict[uid]
-		# 已经进入删除组的越过判断
 		if drop.is_pending_remove:
 			continue
+		
 		# 生命周期超时，标记删除
 		if world_time - drop.spawn_time >= DROP_LIFETIME:
 			to_remove_nature.append(uid)
 			drop.is_pending_remove = true
-			continue # 直接跳过，不再做距离、拾取判定
-		var dist = drop.world_pos.distance_to(player_pixel_pos)
-		# 进入拾取范围，开启吸收标记
+			continue
+
+		# 【多人核心】查找距离这个掉落物最近的玩家
+		var nearest_p_pos:Vector2
+		var nearest_uid:int = -1
+		var min_dist:float = INF
+		for p_uid in player_dict:
+			var p_data:PlayerData = player_dict[p_uid]
+			var p_pos:Vector2 = p_data.get_player_global_pos()
+			var d:float = drop.world_pos.distance_to(p_pos)
+			if d < min_dist:
+				min_dist = d
+				nearest_p_pos = p_pos
+				nearest_uid = p_uid
+		
+		# 没有任何玩家，跳过吸附拾取
+		if nearest_uid == -1:
+			continue
+		
+		var dist:float = min_dist
+		
+		# 进入拾取范围开启吸收标记；离开范围关闭
 		if dist < PICKUP_RANGE and not drop.is_absorbing:
 			drop.is_absorbing = true
-		
+		if dist > PICKUP_RANGE and drop.is_absorbing:
+			drop.is_absorbing = false
+			
 		if drop.is_absorbing:
-			var dir = (player_pixel_pos - drop.world_pos).normalized()
+			var dir = (nearest_p_pos - drop.world_pos).normalized()
 			var absorb_force:Vector2 = dir * ABSORB_SPEED * delta
 			on_drop_apply_force.emit(uid, absorb_force)
 		
-		# 足够靠近，拾取成功，标记删除
+		# 距离足够近，拾取成功
 		if dist < PICKUP_THRESHOLD:
 			to_remove_pick_up.append(uid)
 			drop.is_pending_remove = true
 			continue
 	
-	# 批量清理(自然状态超时清理)
+	# 批量清理(自然超时)
 	for uid in to_remove_nature:
-		# 先传出对应Item
 		var drop_instance: DropItemData = drop_dict.get(uid)
 		on_drop_removed.emit(uid, drop_instance.item, DropDestroyReason.NATURE)
 		on_entity_destroy.emit(uid, drop_instance.entity_type)
 		drop_dict.erase(uid)
 	
-	# 拾取状态清理	
+	# 拾取清理
 	for uid in to_remove_pick_up:
-		# 先传出对应Item
 		var drop_instance: DropItemData = drop_dict.get(uid)
+		# ✨【新增】物品进对应玩家背包
+		var target_p_uid:int = -1
+		var min_d:float = INF
+		for p_uid in player_dict:
+			var pd:PlayerData = player_dict[p_uid]
+			var d = drop_instance.world_pos.distance_to(pd.get_player_global_pos())
+			if d < min_d:
+				min_d = d
+				target_p_uid = p_uid
+		if target_p_uid != -1:
+			var target_player:PlayerData = player_dict[target_p_uid]
+			DebugSystem.console_common_log("世界[掉落物管理器]", "尝试向玩家背包[uid:%s]添加物品: %s" % [target_p_uid, drop_instance.item])
+			# 判断是否完全将物品添加进背包
+			var add_ok:bool = target_player.try_pickup_item(drop_instance.item)
+			if not add_ok:
+				# 拾取
+				drop_instance.is_pending_remove = false
+				continue
+			
 		on_drop_removed.emit(uid, drop_instance.item, DropDestroyReason.PICKUP)
 		on_entity_destroy.emit(uid, drop_instance.entity_type)
 		drop_dict.erase(uid)
