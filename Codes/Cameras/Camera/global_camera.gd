@@ -1,5 +1,8 @@
 extends Camera2D
 
+## 全局相机
+class_name GlobalCamera
+
 @export var followCase: Node
 @export var lerp_level: float = 1.5
 
@@ -22,3 +25,8 @@ func _follow_case() -> void:
 		global_position = followCase.global_position
 		## 整数对齐相机防抖动
 		global_position = global_position.round()
+
+## 更改跟随对象
+func set_follow_case(case: Node) -> void:
+	if case != null:
+		followCase = case

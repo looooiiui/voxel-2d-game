@@ -5,7 +5,8 @@ extends Node2D
 @export var tile_map_layer: TileMapLayer
 @export var player_input_control: InputController
 @export var drop_bridge: DropBridge
-@export var camera: Camera2D
+@export var player_bridge: PlayerBridge
+@export var camera:GlobalCamera
 ## 核心类(渲染器，世界)
 var render_bridge: RenderBridge
 var world: World
@@ -18,7 +19,7 @@ var rendered_chunks:Dictionary = {}
 
 ## 启动检查
 func _ready() -> void:
-	# 加载资源
+	# 加载资源ca
 	# 先加载属性再加载实例最后图集贴图
 	_tile_cell_load()
 	_item_load()
@@ -29,17 +30,15 @@ func _ready() -> void:
 	render_bridge = RenderBridge.new(tile_map_layer)
 	_load_world()
 	DebugSystem.console_common_log("核心节点", "创建世界: %s" % world)
-	# 注入节点给玩家控制
+	# 注入节点给玩家控制检测(玩家并没有创建)
 	player_input_control.camera = camera
-	# 生成玩家
-	_create_player()
 	# 测试所需核心是否加载
 	_debug_start()
 	render_bridge.world = world
 	if is_render_ready:
 		_connect_signals()
 		_render_map()
-		_set_world()
+		_set_world()	
 		
 ## 瓦片加载
 func _tile_cell_load() -> void:
@@ -54,15 +53,12 @@ func _item_load() -> void:
 	ItemInstances.load_mapping_instance()
 
 ## 创建并加入玩家
-func _create_player() -> void:
-	# 申请世界创建实体
-	var new_uid = world.get_new_uid()
-	var temp_player_data = EntitySpawner.spawn_player(new_uid)
-	world.add_new_entity(temp_player_data)
-	DebugSystem.console_common_log("核心节点", "创建玩家数据: %s" % temp_player_data)
+func sync_player_entity(new_player_data: PlayerData) -> void:
 	# 同步玩家实体与数据：PlayerEntity视图节点持有，DI本身不持有
-	player_instance.setup(temp_player_data)
-	DebugSystem.console_common_log("核心节点", "同步玩家数据: %s 到 %s" % [temp_player_data, player_instance])
+	player_bridge.on_add_player(new_player_data)
+	DebugSystem.console_common_log("核心节点", "向玩家桥发送玩家实体创建信息: %s" % [new_player_data])
+	# 临时同步一下玩家
+	camera.set_follow_case(player_bridge.entity_map[new_player_data.get_uid()])
 
 ## 世界加载
 func _load_world() -> void:
@@ -71,6 +67,7 @@ func _load_world() -> void:
 ## 世界属性设置
 func _set_world() -> void:
 	world.set_gravity(980.665)
+	world.spawn_new_player()
 
 ## 连接信号
 func _connect_signals() -> void:
@@ -86,6 +83,8 @@ func _connect_signals() -> void:
 	world.drop_removed.connect(drop_bridge.on_drop_removed)
 	world.drop_apply_force.connect(drop_bridge.on_drop_apply_force)
 	drop_bridge.drop_position_updated.connect(world.receive_drop_updated_info)
+	# 玩家创建信号
+	world.spawn_player_data.connect(sync_player_entity)
 	
 func _physics_process(delta: float) -> void:
 	if !is_render_ready:

@@ -8,6 +8,7 @@ size = Vector2(32, 32)
 [sub_resource type="CanvasTexture" id="CanvasTexture_ifow5"]
 
 [node name="Player" type="CharacterBody2D" unique_id=71195304]
+top_level = true
 script = ExtResource("1_dmerp")
 
 [node name="CollisionShape" type="CollisionShape2D" parent="." unique_id=2003622207]

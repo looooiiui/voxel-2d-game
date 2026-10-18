@@ -12,15 +12,15 @@ signal entity_despawned(uid:int, entity:EntityBase)
 
 ## 添加实体（外部调用）
 func add_entity(entity:EntityBase) -> void:
-	DebugSystem.console_common_log("世界[实体管理查询器]", "添加实体[uid]: %s, 类型: %s" % [entity.uid, entity.entity_type])
+	DebugSystem.console_common_log("世界[实体管理查询器]", "添加实体[uid]: %s, 类型: %s" % [entity.get_uid(), entity.entity_type])
 	match entity.entity_type:
 		EntityBase.EntityType.PLAYER:
-			players[entity.uid] = entity
+			players[entity.get_uid()] = entity
 			DebugSystem.console_common_log("世界[实体管理查询器]", "当前玩家实体表: %s" % players)
 		EntityBase.EntityType.DROP_ITEM:
-			drops[entity.uid] = entity
+			drops[entity.get_uid()] = entity
 			DebugSystem.console_common_log("世界[实体管理查询器]", "当前物品实体表: %s" % drops)
-	entity_spawned.emit(entity.uid, entity)
+	entity_spawned.emit(entity.get_uid(), entity)
 	
 ## 分配并获取下一个可用UID（新建实体调用）
 func allocate_uid() -> int:

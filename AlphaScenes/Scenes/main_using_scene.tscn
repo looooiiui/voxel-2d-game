@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://bnbuqyo0400sx" path="res://Systems/playerInput/player_input.tscn" id="7_h8sox"]
 [ext_resource type="PackedScene" uid="uid://di41mwvh4s0iy" path="res://Systems/DropBridge/drop_bridge.tscn" id="8_h8sox"]
 [ext_resource type="PackedScene" uid="uid://bj7yergspufjr" path="res://Scenes/DropItemEntity/drop_item_entity.tscn" id="9_64np5"]
+[ext_resource type="PackedScene" uid="uid://crbyufxfvday1" path="res://Systems/PlayerBridge/player_bridge.tscn" id="10_qxe8y"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_64np5"]
 texture = ExtResource("2_g6fif")
@@ -28,12 +29,12 @@ physics_layer_0/collision_layer = 1
 sources/2 = SubResource("TileSetAtlasSource_qxe8y")
 sources/1 = SubResource("TileSetAtlasSource_64np5")
 
-[node name="MainUsingScene" type="Node2D" unique_id=911860184 node_paths=PackedStringArray("player_instance", "tile_map_layer", "player_input_control", "drop_bridge", "camera")]
+[node name="MainUsingScene" type="Node2D" unique_id=911860184 node_paths=PackedStringArray("tile_map_layer", "player_input_control", "drop_bridge", "player_bridge", "camera")]
 script = ExtResource("1_3lpbi")
-player_instance = NodePath("Player")
 tile_map_layer = NodePath("TileMapLayer")
 player_input_control = NodePath("PlayerInputControl")
 drop_bridge = NodePath("DropBridge")
+player_bridge = NodePath("PlayerBridge")
 camera = NodePath("GlobalCamera")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1869089906]
@@ -43,12 +44,14 @@ tile_set = SubResource("TileSet_ibjym")
 [node name="UsingPlayer" parent="." unique_id=34264864 instance=ExtResource("2_eqcjx")]
 position = Vector2(353, 224)
 
-[node name="Player" parent="." unique_id=71195304 instance=ExtResource("6_wil0y")]
-
-[node name="GlobalCamera" parent="." unique_id=675677074 node_paths=PackedStringArray("followCase") instance=ExtResource("7_g6fif")]
-followCase = NodePath("../Player")
+[node name="GlobalCamera" parent="." unique_id=675677074 instance=ExtResource("7_g6fif")]
 
 [node name="PlayerInputControl" parent="." unique_id=1230397966 instance=ExtResource("7_h8sox")]
 
 [node name="DropBridge" parent="." unique_id=1424620046 instance=ExtResource("8_h8sox")]
 drop_entity_scene = ExtResource("9_64np5")
+
+[node name="PlayerBridge" parent="." unique_id=1833884348 instance=ExtResource("10_qxe8y")]
+player_entity_scene = ExtResource("6_wil0y")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1630174410]

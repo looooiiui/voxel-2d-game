@@ -19,17 +19,17 @@ func on_drop_added(drop_data:DropItemData):
 	var new_entity = drop_entity_scene.instantiate()
 	var drop_entity_script: DropItemEntity = new_entity as DropItemEntity
 	if drop_entity_script == null:
-		DebugSystem.console_warn_log("掉落桥", "掉落物场景: uid: %s 没有挂载脚本" % drop_data.uid)
+		DebugSystem.console_warn_log("掉落桥", "掉落物场景: uid: %s 没有挂载脚本" % drop_data.get_uid())
 	# 【注入数据】调用初始化函数，把 uid、bridge、drop实例传给场景脚本
-	drop_entity_script.setup(drop_data.uid, drop_data.item.get_item_instance().get_item_name(), self)
+	drop_entity_script.setup(drop_data.get_uid(), drop_data.item.get_item_instance().get_item_name(), self)
 	
 	# 设置初始位置
 	new_entity.global_position = drop_data.world_pos
 	var spwan_velocity: Vector2 = drop_data.velocity
 	new_entity.set_axis_velocity(spwan_velocity)
 	add_child(new_entity)
-	entity_map[drop_data.uid] = new_entity
-	DebugSystem.console_common_log("掉落桥", "生成掉落实体 uid= %d, 坐标: %s" % [drop_data.uid, drop_data.world_pos])
+	entity_map[drop_data.get_uid()] = new_entity
+	DebugSystem.console_common_log("掉落桥", "生成掉落实体 uid= %d, 坐标: %s" % [drop_data.get_uid(), drop_data.world_pos])
 	
 
 ## 清除掉落物

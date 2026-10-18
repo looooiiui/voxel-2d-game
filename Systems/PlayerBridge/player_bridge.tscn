@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://crbyufxfvday1"]
+
+[ext_resource type="Script" uid="uid://dqgp1plf07tbw" path="res://Systems/PlayerBridge/PlayerBridge.gd" id="1_ut3ae"]
+
+[node name="PlayerBridge" type="Node" unique_id=1833884348]
+script = ExtResource("1_ut3ae")

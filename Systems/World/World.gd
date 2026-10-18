@@ -9,6 +9,7 @@ signal drop_added(new_drop:DropItemData)
 signal drop_removed(uid:int, item: Item, remove_reason: DropManager.DropDestroyReason)
 signal drop_apply_force(uid:int, absorb_force: Vector2)
 signal drop_info_updated(uid: int, new_position: Vector2, linear_velocity: Vector2)
+signal spawn_player_data(player_data: PlayerData)
 ## 世界属性
 var seed: int
 var gravity:float = 980
@@ -76,6 +77,16 @@ func add_new_entity(new_entity: EntityBase) -> void:
 ## 去除实体
 func despawn_entity(uid:int, type:EntityBase.EntityType):
 	entity_storage.remove_entity(uid, type)
+
+## 生成玩家
+func spawn_new_player() -> void:
+	# 申请创建实体
+	var new_uid = get_new_uid()
+	var new_player_data = EntitySpawner.spawn_player(new_uid)
+	add_new_entity(new_player_data)
+	DebugSystem.console_common_log("世界", "创建玩家数据: %s, uid: %s" % [new_player_data, new_uid])
+	# 数据发送给外部(信号)
+	spawn_player_data.emit(new_player_data)
 
 ## 设置重力,通知外部世界重力发生改变
 func set_gravity(new_val:float):

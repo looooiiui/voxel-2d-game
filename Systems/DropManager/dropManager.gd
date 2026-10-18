@@ -29,8 +29,8 @@ var DROP_LIFETIME: float = 300
 func spawn(new_uid: int, item:Item, spawn_pos:Vector2, world_time:float, spawn_vel:Vector2=Vector2.ZERO) -> void:
 	var new_drop = EntitySpawner.spawn_drop_item(new_uid, item, spawn_pos, world_time)
 	new_drop.velocity = spawn_vel
-	drop_dict[new_drop.uid] = new_drop
-	DebugSystem.console_common_log("世界[掉落物管理器]", "生成掉落物: uid: %s , 物品: %s, 对应名字: %s" % [new_drop.uid, item, item.get_item_instance().get_item_name()])
+	drop_dict[new_drop.get_uid()] = new_drop
+	DebugSystem.console_common_log("世界[掉落物管理器]", "生成掉落物: uid: %s , 物品: %s, 对应名字: %s" % [new_drop.get_uid(), item, item.get_item_instance().get_item_name()])
 	on_entity_add.emit(new_drop)
 	# 回调给World
 	on_drop_added.emit(new_drop)
@@ -99,7 +99,7 @@ func tick(delta:float, world_time:float, player_dict:Dictionary) -> void:
 	# 拾取清理
 	for uid in to_remove_pick_up:
 		var drop_instance: DropItemData = drop_dict.get(uid)
-		# ✨【新增】物品进对应玩家背包
+		# 【新增】物品进对应玩家背包
 		var target_p_uid:int = -1
 		var min_d:float = INF
 		for p_uid in player_dict:
