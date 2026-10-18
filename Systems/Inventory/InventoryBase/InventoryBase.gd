@@ -4,7 +4,7 @@ extends RefCounted
 ## 需要注意的是，背包使用的查找坐标为 列 + 行
 class_name InventoryBase
 
-# 物品发生变更时触发
+## 物品发生变更时触发
 signal inventory_changed()
 
 ## 容器大小，供给外部获取(列，行)
@@ -19,6 +19,123 @@ func _init(size: Vector2i) -> void:
 	slot_storage.resize(container_size)
 	for i in range(slot_storage.size()):
 		slot_storage[i] = ItemSlot.new()
+		
+## 尝试往物品栏里面添加物品，支持堆叠
+## 返回true成功；false背包已满无法放入
+func try_add_item(new_item: Item) -> bool:
+	# 第一步：优先寻找【同物品且还有堆叠空位】的槽位
+	for index in range(slot_storage.size()):
+		var slot = slot_storage[index]
+		var slot_item = slot.get_item()
+		# 槽位有物品，并且是同一种物品
+		if slot_item != null and slot_item.is_same_item(new_item):
+			var max_stack_num = slot_item.get_item_attribute().get_max_stack_num()
+			var remain_stack = max_stack_num - slot_item.get_current_stack_num()
+			if remain_stack > 0:
+				# 可以堆叠，直接叠加数量
+				var add_count = min(new_item.get_current_stack_num(), remain_stack)
+				slot_item.change_stack_num(slot_item.get_current_stack_num() + add_count)
+				new_item.change_stack_num(new_item.get_current_stack_num() - add_count) 
+				# 发生堆叠则发射信号
+				inventory_changed.emit()
+				DebugSystem.console_common_log("物品栏", "物品堆叠， 槽位%d， 叠加%d个， 总共堆叠: %d, 剩余待放:%d" % [index, add_count, slot_item.get_current_stack_num(), remain_stack])
+				# 待放入物品已经全部塞完，直接返回成功
+				if new_item.current_stack_num <= 0:
+					return true
+	
+	# 第二步：没有可堆叠槽位，寻找空槽位放入新物品
+	for index in range(slot_storage.size()):
+		var slot = slot_storage[index]
+		var slot_item = slot.get_item()
+		if slot_item == null:
+			slot.add_item(new_item)
+			DebugSystem.console_common_log("物品栏", "空槽放入物品(槽位%s): %s" % [index, new_item])
+			inventory_changed.emit()
+			return true
+	
+	# 没有可堆叠位置、也没有空槽 → 背包满
+	DebugSystem.console_common_log("物品栏", "物品栏已满，无法放入物品")
+	inventory_changed.emit()
+	return false
+
+## 将本容器idx的物品移动到目标inventory的target_idx槽
+func try_move_to_other_inventory(target_inv: InventoryBase, from_idx: int, target_idx: int) -> bool:
+	var source_slot = get_slot_by_index(from_idx)
+	var dest_slot = target_inv.get_slot_by_index(target_idx)
+	if source_slot == null or dest_slot == null:
+		return false
+	
+	var move_item = source_slot.get_item()
+	if move_item == null:
+		return false
+
+	# 目标槽已有物品，不能直接覆盖，走swap逻辑
+	if dest_slot.get_item() != null:
+		# 取出目标槽物品，互换
+		var dest_item = dest_slot.get_item()
+		source_slot.set_item(dest_item)
+		dest_slot.set_item(move_item)
+	else:
+		# 目标是空槽，直接移过去，原槽清空
+		dest_slot.set_item(move_item)
+		source_slot.clear()
+	
+	# 两个容器都触发更新信号
+	inventory_changed.emit()
+	target_inv.inventory_changed.emit()
+	DebugSystem.console_common_log("物品栏", "跨容器移动：源槽%d → 目标槽%d" % [from_idx, target_idx])
+	return true
+
+## 将本容器(col,row)的物品移动到目标容器的(t_col,t_row)网格位置
+func try_move_to_other_inventory_grid(target_inv: InventoryBase, col: int, row: int, t_col: int, t_row: int) -> bool:
+	var from_idx = grid_to_index(col, row)
+	var target_idx = target_inv.grid_to_index(t_col, t_row)
+	if from_idx == -1 or target_idx == -1:
+		return false
+	return try_move_to_other_inventory(target_inv, from_idx, target_idx)
+
+## 尝试交换当前容器内两个槽位物品
+## @param idx_a 源槽索引
+## @param idx_b 目标槽索引
+## @return true 交换成功，false 交换失败
+func try_swap_slot(idx_a: int, idx_b: int) -> bool:
+	# 同一个槽，无需操作
+	if idx_a == idx_b:
+		return true
+	
+	var slot_a = get_slot_by_index(idx_a)
+	var slot_b = get_slot_by_index(idx_b)
+	# 索引非法
+	if slot_a == null or slot_b == null:
+		return false
+
+	# 取出两个槽里面当前物品
+	var item_a: Item = slot_a.get_item()
+	var item_b: Item = slot_b.get_item()
+
+	# 互换
+	slot_a.set_item(item_b)
+	slot_b.set_item(item_a)
+
+	DebugSystem.console_common_log("物品栏", "交换槽位 %d <-> %d" % [idx_a, idx_b])
+	inventory_changed.emit()
+	return true
+	
+## 尝试交换当前容器内两个网格位置的物品（列+行形式）
+## @param col_a, row_a 源槽：列、行
+## @param col_b, row_b 目标槽：列、行
+## @return true交换成功；false失败（越界等）
+func try_swap_slot_grid(col_a: int, row_a: int, col_b: int, row_b: int) -> bool:
+	# 网格转一维索引
+	var idx_a = grid_to_index(col_a, row_a)
+	var idx_b = grid_to_index(col_b, row_b)
+	
+	# 越界检查
+	if idx_a == -1 or idx_b == -1:
+		return false
+	
+	# 调用已经写好的一维索引交换函数
+	return try_swap_slot(idx_a, idx_b)
 
 # 网格坐标(col列,row行) → 一维索引
 func grid_to_index(col: int, row: int) -> int:

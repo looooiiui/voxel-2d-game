@@ -37,4 +37,4 @@ func _player_move(delta: float) -> void:
 		velocity.x = direction * player_data.move_speed
 	else:
 		velocity.x = move_toward(velocity.x, 0, player_data.move_speed)
-		
+	

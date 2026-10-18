@@ -9,6 +9,7 @@ signal drop_added(new_drop:DropItemData)
 signal drop_removed(uid:int, item: Item, remove_reason: DropManager.DropDestroyReason)
 signal drop_apply_force(uid:int, absorb_force: Vector2)
 signal drop_info_updated(uid: int, new_position: Vector2, linear_velocity: Vector2)
+signal control_player_uid_changed(uid: int)
 signal spawn_player_data(player_data: PlayerData)
 ## 世界属性
 var seed: int
@@ -16,7 +17,7 @@ var gravity:float = 980
 var world_time:float = 0.0
 var drop_manager:DropManager
 var entity_storage: EntityStorage
-# 区块清理
+## 区块清理
 var chunk_prune_timer:float = 0.0
 const PRUNE_INTERVAL:float = 2 # 2秒扫描一次区块，可调整
 ## 区块生成器 
@@ -24,8 +25,10 @@ var terrain_generator: TerrainGenerator
 ## 已加载的区块 Key: 区块坐标Vector2i, value: Chunk
 var loaded_chunks: Dictionary[Vector2i, Chunk] = {}
 var data_unload_radius: int = 5
-# 玩家区块坐标，由外部每一帧写入玩家网格坐标后计算（World本身不持有player节点）
-var player_chunk_pos:Vector2i = Vector2i.ZERO
+## 玩家区块坐标，由外部每一帧写入玩家网格坐标后计算（World本身不持有player节点）
+var player_chunk_pos: Vector2i = Vector2i.ZERO
+## 当前玩家控制角色uid,由世界创建给予或者网络传输赋予
+var control_player_uid: int = -1
 
 func _init(p_seed) -> void:
 	seed = p_seed
@@ -85,9 +88,27 @@ func spawn_new_player() -> void:
 	var new_player_data = EntitySpawner.spawn_player(new_uid)
 	add_new_entity(new_player_data)
 	DebugSystem.console_common_log("世界", "创建玩家数据: %s, uid: %s" % [new_player_data, new_uid])
-	# 数据发送给外部(信号)
-	spawn_player_data.emit(new_player_data)
+	# 创建玩家数据发送给外部(信号)
+	if control_player_uid == -1:
+		control_player_uid = new_uid
+		DebugSystem.console_common_log("世界", "当前创建为本地控制玩家uid: %s, uid: %s" % [new_player_data, new_uid])
+		spawn_player_data.emit(new_player_data)
+		emit_signal("control_player_uid_changed", control_player_uid)
+	else:
+		spawn_player_data.emit(new_player_data)
 
+## 获得当前控制玩家 Uid
+func get_control_player_uid() -> int:
+	return control_player_uid
+
+func set_control_player_uid(uid:int):
+	# 简单校验：实体存在才允许设置
+	if entity_storage.has_player(uid):
+		DebugSystem.console_common_log("世界", "修改主玩家 uid: %s 不存在对应数据实体" % uid)
+		control_player_uid = uid
+	# 发送新控制玩家 uid 请求
+	emit_signal("control_player_uid_changed", control_player_uid)
+		
 ## 设置重力,通知外部世界重力发生改变
 func set_gravity(new_val:float):
 	if new_val < 0: return

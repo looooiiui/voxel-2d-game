@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://di41mwvh4s0iy" path="res://Systems/DropBridge/drop_bridge.tscn" id="8_h8sox"]
 [ext_resource type="PackedScene" uid="uid://bj7yergspufjr" path="res://Scenes/DropItemEntity/drop_item_entity.tscn" id="9_64np5"]
 [ext_resource type="PackedScene" uid="uid://crbyufxfvday1" path="res://Systems/PlayerBridge/player_bridge.tscn" id="10_qxe8y"]
+[ext_resource type="PackedScene" uid="uid://dmm13qiyyfvxw" path="res://Systems/Ui/UiBridge/UiBridge.tscn" id="11_6pk0w"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_64np5"]
 texture = ExtResource("2_g6fif")
@@ -29,12 +30,13 @@ physics_layer_0/collision_layer = 1
 sources/2 = SubResource("TileSetAtlasSource_qxe8y")
 sources/1 = SubResource("TileSetAtlasSource_64np5")
 
-[node name="MainUsingScene" type="Node2D" unique_id=911860184 node_paths=PackedStringArray("tile_map_layer", "player_input_control", "drop_bridge", "player_bridge", "camera")]
+[node name="MainUsingScene" type="Node2D" unique_id=911860184 node_paths=PackedStringArray("tile_map_layer", "player_input_control", "drop_bridge", "player_bridge", "ui_bridge", "camera")]
 script = ExtResource("1_3lpbi")
 tile_map_layer = NodePath("TileMapLayer")
 player_input_control = NodePath("PlayerInputControl")
 drop_bridge = NodePath("DropBridge")
 player_bridge = NodePath("PlayerBridge")
+ui_bridge = NodePath("CanvasLayer")
 camera = NodePath("GlobalCamera")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1869089906]
@@ -54,4 +56,4 @@ drop_entity_scene = ExtResource("9_64np5")
 [node name="PlayerBridge" parent="." unique_id=1833884348 instance=ExtResource("10_qxe8y")]
 player_entity_scene = ExtResource("6_wil0y")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1630174410]
+[node name="CanvasLayer" parent="." unique_id=1531771844 instance=ExtResource("11_6pk0w")]

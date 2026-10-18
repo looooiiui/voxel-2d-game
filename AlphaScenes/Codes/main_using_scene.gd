@@ -1,11 +1,11 @@
 extends Node2D
 
 # 主节点
-@export var player_instance: PlayerEntity
 @export var tile_map_layer: TileMapLayer
 @export var player_input_control: InputController
 @export var drop_bridge: DropBridge
 @export var player_bridge: PlayerBridge
+@export var ui_bridge: UiBridge
 @export var camera:GlobalCamera
 ## 核心类(渲染器，世界)
 var render_bridge: RenderBridge
@@ -14,7 +14,7 @@ var player_chunk_pos:Vector2i
 var render_distance: int = 1   # 1 = 3x3 区域，2 = 5x5 区域
 ## 玩家所在区块
 var is_render_ready: bool = true
-# 保存当前已经绘制在TileMap上的区块
+## 保存当前已经绘制在TileMap上的区块
 var rendered_chunks:Dictionary = {}
 
 ## 启动检查
@@ -57,8 +57,6 @@ func sync_player_entity(new_player_data: PlayerData) -> void:
 	# 同步玩家实体与数据：PlayerEntity视图节点持有，DI本身不持有
 	player_bridge.on_add_player(new_player_data)
 	DebugSystem.console_common_log("核心节点", "向玩家桥发送玩家实体创建信息: %s" % [new_player_data])
-	# 临时同步一下玩家
-	camera.set_follow_case(player_bridge.entity_map[new_player_data.get_uid()])
 
 ## 世界加载
 func _load_world() -> void:
@@ -84,6 +82,7 @@ func _connect_signals() -> void:
 	world.drop_apply_force.connect(drop_bridge.on_drop_apply_force)
 	drop_bridge.drop_position_updated.connect(world.receive_drop_updated_info)
 	# 玩家创建信号
+	world.control_player_uid_changed.connect(_on_control_player_uid_change)
 	world.spawn_player_data.connect(sync_player_entity)
 	
 func _physics_process(delta: float) -> void:
@@ -171,3 +170,8 @@ func _on_gravity_change(new_g:float):
 	PhysicsServer2D.area_set_param(space_rid, PhysicsServer2D.AREA_PARAM_GRAVITY, new_g)
 	PhysicsServer2D.area_set_param(space_rid, PhysicsServer2D.AREA_PARAM_GRAVITY_VECTOR, Vector2(0, 1))
 	DebugSystem.console_common_log("核心节点: 重力", "设置重力: %s" % new_g)
+
+## 当前控制玩家发生变化
+func _on_control_player_uid_change(new_uid: int) -> void:
+	DebugSystem.console_common_log("核心节点", "当前控制玩家 uid 更改为: %s" % new_uid)
+	camera.set_follow_case(player_bridge.get_player_uid_entity_map().get(new_uid))
