@@ -87,7 +87,7 @@ static func get_texture_atlas_source(texture_path: String, name: String) -> void
 	name_to_source_id[name] = [source_id, atlas_pos]
 	DebugSystem.console_common_log("图集注册表", "注册方块 %s source_id=%d" % [name, source_id])
 	
-# 根据方块名字查询source_id、atlas坐标，渲染用【改为static】
+## 根据方块名字查询source_id、atlas坐标，渲染用【改为static】
 static func get_tile_draw_info(name: String) -> Array:
 	if name_to_source_id.has(name):
 		return name_to_source_id[name]

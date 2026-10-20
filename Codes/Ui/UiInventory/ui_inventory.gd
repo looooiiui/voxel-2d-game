@@ -44,7 +44,7 @@ func setup(
 func _render_back_pack() -> void:
 	# 检查尺寸是否在合理范围
 	if BackPackSize.x <=0 or BackPackSize.y <=0:
-		DebugSystem.console_warn_log("物品栏UI", "背包行列不能小于等于0")
+		DebugSystem.console_warn_log("物品栏UI", "物品栏行列不能小于等于0")
 		return
 	back_pack_clear()
 	DebugSystem.console_common_log("物品栏UI", "物品栏UI渲染")
@@ -81,7 +81,7 @@ func _render_back_pack() -> void:
 	# UiInventory.gd，_render_back_pack函数最后
 	# bg_total_w、bg_total_h就是之前算好的背包底板总宽高
 	custom_minimum_size = Vector2i(bg_total_w, bg_total_h)
-	DebugSystem.console_common_log("物品栏UI", "当前物品栏格子映射表: %s" % slots_dict)
+	# DebugSystem.console_common_log("物品栏UI", "当前物品栏格子映射表: %s" % slots_dict)
 	
 ## 增量更新单个格子（ 物品数据变更只调用这个，不重建背包）
 func set_slot_item(slot_pos: Vector2i, item_name: String, item_count: int) -> void:
@@ -98,7 +98,41 @@ func clear_all_slot_items() -> void:
 
 ## 清除背包
 func back_pack_clear() -> void:
-	DebugSystem.console_common_log("物品栏UI", "清除背包所有格子节点")
+	DebugSystem.console_common_log("物品栏UI", "清除物品栏所有格子节点")
 	for slot in slots_dict.values():
 		slot.queue_free()
 	slots_dict.clear()
+	
+## 根据玩家数据+InventoryType，刷新当前UiInventory的全部UI格子
+## 不持有PlayerData长期引用，仅读取一次数据用于全量刷新
+func setup_by_player_data(player_data:PlayerData, inv_type:InventoryBase.InventoryType) -> void:
+	var target_inv:InventoryBase
+	match inv_type:
+		InventoryBase.InventoryType.BACKPACK:
+			target_inv = player_data.get_player_back_pack()
+		InventoryBase.InventoryType.QUICK_BAR:
+			target_inv = player_data.get_player_inventory_quick_bar()
+		_:
+			DebugSystem.console_warn_log("物品栏UI", "不支持的物品栏类型 %s" % str(inv_type))
+			return
+	
+	# 使用目标物品栏尺寸重建UI容器
+	setup(target_inv.inventory_size)
+	
+	# 遍历槽位，全量填充UI
+	var size_x = target_inv.inventory_size.x
+	var size_y = target_inv.inventory_size.y
+	for row in range(size_y):
+		for col in range(size_x):
+			var grid_pos = Vector2i(col, row)
+			var slot_data = target_inv.get_slot_by_grid(col, row)
+			var item = slot_data.get_item()
+			var item_name:String
+			var item_num:int
+			if item == null:
+				item_name = ""
+				item_num = 0
+			else:
+				item_name = item.get_item_instance().get_item_name()
+				item_num = item.get_current_stack_num()
+			set_slot_item(grid_pos, item_name, item_num)

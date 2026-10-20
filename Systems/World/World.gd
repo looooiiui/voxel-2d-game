@@ -83,6 +83,13 @@ func despawn_entity(uid:int, type:EntityBase.EntityType):
 ## 返回玩家实体表
 func get_player_entity_dict() -> Dictionary:
 	return entity_storage.get_all_players()
+## 获得当前控制玩家uid
+func get_control_player_uid() -> int:
+	return control_player_uid
+## 获得当前玩家的数据 (请不要更改)
+func get_player_data_by_uid(uid: int) -> PlayerData:
+	return entity_storage.get_player_by_uid(uid)
+	
 ## 生成玩家
 func spawn_new_player() -> void:
 	# 申请创建实体
@@ -98,11 +105,8 @@ func spawn_new_player() -> void:
 		emit_signal("control_player_uid_changed", control_player_uid)
 	else:
 		spawn_player_data.emit(new_player_data)
-
-## 获得当前控制玩家 Uid
-func get_control_player_uid() -> int:
-	return control_player_uid
-
+		
+## 设置挡墙被控制的玩家
 func set_control_player_uid(uid:int):
 	# 简单校验：实体存在才允许设置
 	if entity_storage.has_player(uid):

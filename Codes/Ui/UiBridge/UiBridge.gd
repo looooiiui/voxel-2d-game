@@ -28,6 +28,21 @@ func _ready() -> void:
 	_back_pack_initialize()
 	_inventory_quick_bar_initialize()
 	
+## 安装玩家数据到ui，重新渲染,传入完整玩家数据，但不引用仅取用数据
+func setup(player_data: PlayerData) -> void:
+	if player_data == null:
+		DebugSystem.console_warn_log("Ui桥", "安装玩家数据为空")
+		return 
+	if back_pack_script == null or inventory_quick_bar_script == null:
+		DebugSystem.console_warn_log("Ui桥", "UI实例还未初始化，无法setup玩家数据")
+		return
+	var player_uid = player_data.get_uid()
+	## 获得物品栏数据并安装 ( size 拿回的类型是 Vector2i )
+	DebugSystem.console_common_log("Ui桥", "设置背包，当前玩家 uid: %s" % player_uid)
+	back_pack_script.setup_by_player_data(player_data, InventoryBase.InventoryType.BACKPACK)
+	DebugSystem.console_common_log("Ui桥", "设置快捷栏，当前玩家 uid: %s" % player_uid)
+	inventory_quick_bar_script.setup_by_player_data(player_data, InventoryBase.InventoryType.QUICK_BAR)
+	
 ## 背包初始化
 func _back_pack_initialize() -> void:
 	ui_back_pack_instance = ui_inventory.instantiate()
@@ -58,16 +73,21 @@ func destroy_all_inventory_ui():
 		ui_inventory_quick_bar_instance = null
 		inventory_quick_bar_script = null
 
-## 更新主背包单个格子
-func update_backpack_slot(pos:Vector2i, item_name:String, count:int) -> void:
-	if back_pack_script == null:
-		DebugSystem.console_warn_log("Ui桥", "背包实例为空，无法更新")
-		return
-	back_pack_script.set_slot_item(pos, item_name, count)
-
-## 更新快捷栏单个格子
-func update_hotbar_slot(pos:Vector2i, item_name:String, count:int) -> void:
-	if inventory_quick_bar_script == null:
-		DebugSystem.console_warn_log("Ui桥", "快捷栏实例为空，无法更新")
-		return
-	inventory_quick_bar_script.set_slot_item(pos, item_name, count)
+## 更新物品栏
+func update_inventory_slot(pos:Vector2i, item_name:String, count:int, inv_type: InventoryBase.InventoryType) -> void:
+	DebugSystem.console_common_log("Ui桥", "更新数据，当前更新类型: %s" % inv_type)
+	match inv_type:
+		# 更新主背包单个格子
+		InventoryBase.InventoryType.BACKPACK:
+			if back_pack_script == null:
+				DebugSystem.console_warn_log("Ui桥", "背包实例为空，无法更新")
+				return
+			back_pack_script.set_slot_item(pos, item_name, count)
+		# 更新快捷栏单个格子
+		InventoryBase.InventoryType.QUICK_BAR:
+			if inventory_quick_bar_script == null:
+				DebugSystem.console_warn_log("Ui桥", "快捷栏实例为空，无法更新")
+				return
+			inventory_quick_bar_script.set_slot_item(pos, item_name, count)	
+		_:
+			DebugSystem.console_warn_log("Ui桥", "快捷栏类型未识别")

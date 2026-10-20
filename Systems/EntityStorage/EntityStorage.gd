@@ -19,7 +19,7 @@ func add_entity(entity:EntityBase) -> void:
 			DebugSystem.console_common_log("世界[实体管理查询器]", "当前玩家实体表: %s" % _players)
 		EntityBase.EntityType.DROP_ITEM:
 			_drops[entity.get_uid()] = entity
-			DebugSystem.console_common_log("世界[实体管理查询器]", "当前物品实体表: %s" % _drops)
+			# DebugSystem.console_common_log("世界[实体管理查询器]", "当前物品实体表: %s" % _drops)
 	entity_spawned.emit(entity.get_uid(), entity)
 	
 ## 分配并获取下一个可用UID（新建实体调用）
@@ -33,13 +33,8 @@ func get_all_players() -> Dictionary:
 	return _players
 
 ## 获得玩家uid对应的数据
-func get_player_by_uid(uid: int) -> Dictionary:
+func get_player_by_uid(uid: int) -> PlayerData:
 	return get_all_players().get(uid)
-
-## 查询接口
-## 获得玩家实体
-func get_player(uid:int) -> PlayerData:
-	return _players.get(uid)
 
 ## 获得掉落物实体
 func get_drop(uid:int) -> DropItemData:

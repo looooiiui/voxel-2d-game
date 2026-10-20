@@ -16,6 +16,10 @@ var render_distance: int = 1   # 1 = 3x3 区域，2 = 5x5 区域
 var is_render_ready: bool = true
 ## 保存当前已经绘制在TileMap上的区块
 var rendered_chunks:Dictionary = {}
+## 存储上一个绑定的玩家数据实例（用于安全解绑信号）
+var bound_player_data:PlayerData = null
+## 存储上一个主玩家uid（仅日志/调试）
+var last_control_uid: int = -1
 
 ## 启动检查
 func _ready() -> void:
@@ -66,8 +70,29 @@ func _load_world() -> void:
 func _set_world() -> void:
 	world.set_gravity(980.665)
 	world.spawn_new_player()
-
-## 连接信号
+	
+## Ui 加载(这里ui信号连接不放在 _connect_signals， 方便统一更改, 活信号)
+func _set_ui() -> void:
+	# 优先用缓存的实例引用解绑，不再通过uid去查找
+	if bound_player_data != null:
+		bound_player_data.inventory_change.disconnect(_inventory_change_transfer)
+		DebugSystem.console_common_log("核心节点", "解绑旧玩家物品信号，uid=%s" % bound_player_data.get_uid())
+		bound_player_data = null
+	
+	var temp_player_data: PlayerData = world.get_player_data_by_uid(world.get_control_player_uid())
+	if temp_player_data == null:
+		DebugSystem.console_warn_log("核心节点", "获取控制玩家数据失败，UI无法初始化")
+		return
+	
+	bound_player_data = temp_player_data
+	# 初始化UI全量加载背包数据
+	ui_bridge.setup(temp_player_data)
+	# 绑定新玩家物品变更信号
+	temp_player_data.inventory_change.connect(_inventory_change_transfer)
+	# 更新记录uid
+	last_control_uid = temp_player_data.get_uid()
+	
+## 连接信号 (死信号，一般是固定管理器连接)
 func _connect_signals() -> void:
 	# 方块破坏
 	player_input_control.block_destroy_request.connect(world.try_destroy_tile_dir)
@@ -85,14 +110,17 @@ func _connect_signals() -> void:
 	world.control_player_uid_changed.connect(_on_control_player_uid_change)
 	world.spawn_player_data.connect(sync_player_entity)
 	
+## 物理帧循环
 func _physics_process(delta: float) -> void:
+	# 向世界提供主循环
+	world.tick_world(delta)
+	
+## 渲染帧循环
+func _process(delta: float) -> void:
 	if !is_render_ready:
 		return
 	_render_map()
 	
-	# 向世界提供主循环
-	world.tick_world(delta)
-
 ## 多人完整区块渲染
 func _render_map() -> void:
 	# 从世界实体存储器拿到全部玩家数据
@@ -174,4 +202,23 @@ func _on_gravity_change(new_g:float):
 ## 当前控制玩家发生变化
 func _on_control_player_uid_change(new_uid: int) -> void:
 	DebugSystem.console_common_log("核心节点", "当前控制玩家 uid 更改为: %s" % new_uid)
-	camera.set_follow_case(player_bridge.get_player_uid_entity_map().get(new_uid))
+	var target_entity = player_bridge.get_player_uid_entity_map().get(new_uid)
+	if target_entity != null:
+		camera.set_follow_case(target_entity)
+	# 这里注意新的值由 ui 设置赋予给当前存储的主玩家数据
+	_set_ui()
+
+## 物品栏(背包更改信号中转)
+func _inventory_change_transfer(
+	change_pos: Vector2i, 
+	new_item_name: String, 
+	new_item_num: int,
+	inv_type: InventoryBase.InventoryType
+) -> void:
+	DebugSystem.console_common_log("核心节点", "执行物品栏数据与对应UI转发")
+	## 物品栏传给ui渲染对应信息
+	ui_bridge.update_inventory_slot(change_pos, new_item_name, new_item_num, inv_type)
+	
+	
+	
+	

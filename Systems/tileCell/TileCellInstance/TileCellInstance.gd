@@ -4,6 +4,7 @@ extends RefCounted
 class_name TileCellInstance
 
 var name: String = ""
+## drop_item 类型为 String，通过这个直接查找对应物品实例表内的实例
 var drop_item = null
 var attribute: TileCellAttribute
 

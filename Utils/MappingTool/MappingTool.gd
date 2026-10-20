@@ -9,6 +9,7 @@ static func tile_instance_to_item(tile_ins: TileCellInstance) -> Item:
 	# 空气不生成掉落
 	if tile_ins.get_tile_drop_item() == null:
 		return null
+	# 根据掉落物名字(String)查询对应物品 ItemInstance
 	var item_template: ItemInstance = ItemInstances.OriginalInstancesType.get(tile_ins.get_tile_drop_item())
 	if item_template == null:
 		DebugSystem.console_common_log("映射工具", "找不到物品模板，name: %s" % tile_ins.name)
