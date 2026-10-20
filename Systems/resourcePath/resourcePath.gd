@@ -13,3 +13,9 @@ static var item_instances_path: String = "res://Resources/Items/ItemInstances/It
 static var tile_cell_texture_path: String = "res://Resources/texture/tileCells/"
 static var item_texture_path: String = "res://Resources/texture/items/"
 static var drop_item_texture_path: String = "res://Resources/texture/dropItems/"
+static var ui_texture_path: String = "res://Resources/texture/uiTexture/"
+
+## 常量池，对应拥有的路径的子路径
+static var UI_TEXTURE_SUBPATH: Dictionary = {
+	"InventorySlotBackGround": "inventory/backGround/"
+}

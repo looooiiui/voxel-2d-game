@@ -9,4 +9,9 @@
 		"attribute": "STONE",
 		"drop_item": "stone"
 	},
+	{
+		"name": "dirt",
+		"attribute": "DIRT",
+		"drop_item": "dirt"
+	},
 ]

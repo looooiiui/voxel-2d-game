@@ -80,7 +80,9 @@ func add_new_entity(new_entity: EntityBase) -> void:
 ## 去除实体
 func despawn_entity(uid:int, type:EntityBase.EntityType):
 	entity_storage.remove_entity(uid, type)
-
+## 返回玩家实体表
+func get_player_entity_dict() -> Dictionary:
+	return entity_storage.get_all_players()
 ## 生成玩家
 func spawn_new_player() -> void:
 	# 申请创建实体
@@ -104,10 +106,12 @@ func get_control_player_uid() -> int:
 func set_control_player_uid(uid:int):
 	# 简单校验：实体存在才允许设置
 	if entity_storage.has_player(uid):
-		DebugSystem.console_common_log("世界", "修改主玩家 uid: %s 不存在对应数据实体" % uid)
+		DebugSystem.console_common_log("世界", "修改主玩家 uid: %s 存在对应数据实体, 修改控制数据" % uid)
 		control_player_uid = uid
-	# 发送新控制玩家 uid 请求
-	emit_signal("control_player_uid_changed", control_player_uid)
+		# 发送新控制玩家 uid 请求
+		emit_signal("control_player_uid_changed", control_player_uid)
+	else:
+		DebugSystem.console_common_log("世界", "修改主玩家 uid: %s 不存在对应数据实体" % uid)
 		
 ## 设置重力,通知外部世界重力发生改变
 func set_gravity(new_val:float):

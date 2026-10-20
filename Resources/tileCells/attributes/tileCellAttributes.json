@@ -13,4 +13,11 @@
 		"is_solid": true,
 		"light_emission": 0
 	},
+	{
+		"name": "DIRT",
+		"id": 2,
+		"hp": 1,
+		"is_solid": true,
+		"light_emission": 0
+	},
 ]

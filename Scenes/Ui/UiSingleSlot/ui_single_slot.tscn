@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://beut6wwitgtua"]
+
+[ext_resource type="Script" uid="uid://g4ijdek1giap" path="res://Codes/Ui/UiSingleSlot/ui_single_slot.gd" id="1_agbpv"]
+
+[node name="SingleSlot" type="Control" unique_id=1102491706 node_paths=PackedStringArray("background_panel", "itemEntity_panel", "item_num_label")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_agbpv")
+background_panel = NodePath("BackGround")
+itemEntity_panel = NodePath("ItemEntity")
+item_num_label = NodePath("ItemNum")
+
+[node name="BackGround" type="Panel" parent="." unique_id=229097643]
+layout_mode = 0
+
+[node name="ItemEntity" type="Panel" parent="." unique_id=1041693611]
+layout_mode = 0
+
+[node name="ItemNum" type="Label" parent="." unique_id=1304013017]
+layout_mode = 0
+offset_right = 1.0
+offset_bottom = 23.0

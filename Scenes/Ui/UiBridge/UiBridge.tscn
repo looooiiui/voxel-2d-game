@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://dmm13qiyyfvxw"]
+
+[ext_resource type="Script" uid="uid://bb880e7h4jcub" path="res://Codes/Ui/UiBridge/UiBridge.gd" id="1_kjomq"]
+
+[node name="CanvasLayer" type="CanvasLayer" unique_id=1531771844 node_paths=PackedStringArray("ui_control", "ui_vbox_container")]
+script = ExtResource("1_kjomq")
+ui_control = NodePath("UiControl")
+ui_vbox_container = NodePath("UiControl/VBoxContainer")
+
+[node name="UiControl" type="Control" parent="." unique_id=2050992823]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UiControl" unique_id=1548723500]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0

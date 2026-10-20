@@ -11,7 +11,7 @@ func _init(new_instance: ItemInstance) -> void:
 	item_instance = new_instance
 
 ## 更换物品模板
-func change_cell_instance(new_item_instance: ItemInstance) -> void:
+func change_item_instance(new_item_instance: ItemInstance) -> void:
 	item_instance = new_item_instance
 	
 ## 获取物品属性模板

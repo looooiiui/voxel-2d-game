@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bwbj1we5wqpam"]
+
+[ext_resource type="Script" uid="uid://bmkh0x6cew7t7" path="res://Codes/Ui/UiInventory/ui_inventory.gd" id="1_rdlcs"]
+[ext_resource type="PackedScene" uid="uid://beut6wwitgtua" path="res://Scenes/Ui/UiSingleSlot/ui_single_slot.tscn" id="2_7hrai"]
+
+[node name="UiBackPack" type="Control" unique_id=992595983 node_paths=PackedStringArray("grid_back_pack_container", "background_panel")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_rdlcs")
+grid_back_pack_container = NodePath("GridBackPack")
+background_panel = NodePath("UiBackGround")
+single_slot = ExtResource("2_7hrai")
+
+[node name="UiBackGround" type="Panel" parent="." unique_id=904905754]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="GridBackPack" type="GridContainer" parent="." unique_id=1836026390]
+layout_mode = 0

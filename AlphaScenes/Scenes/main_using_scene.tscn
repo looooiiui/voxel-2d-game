@@ -1,34 +1,15 @@
-[gd_scene format=4 uid="uid://efgqw7t0xb0u"]
+[gd_scene format=3 uid="uid://efgqw7t0xb0u"]
 
 [ext_resource type="Script" uid="uid://ctoytwllkrvgi" path="res://AlphaScenes/Codes/main_using_scene.gd" id="1_3lpbi"]
 [ext_resource type="PackedScene" uid="uid://csu3kv2gsd8eo" path="res://AlphaScenes/Scenes/using_player.tscn" id="2_eqcjx"]
-[ext_resource type="Texture2D" uid="uid://bb63ktnxn6k3o" path="res://Resources/texture/tileCells/stone.png" id="2_g6fif"]
-[ext_resource type="Texture2D" uid="uid://cbr30xb4yu26w" path="res://Resources/texture/tileCells/air.png" id="3_h8sox"]
 [ext_resource type="PackedScene" uid="uid://csmojgbyo8fvb" path="res://Scenes/Players/Player/player.tscn" id="6_wil0y"]
 [ext_resource type="PackedScene" uid="uid://b6m0ir133wokq" path="res://Scenes/Cameras/Camera/global_camera.tscn" id="7_g6fif"]
 [ext_resource type="PackedScene" uid="uid://bnbuqyo0400sx" path="res://Systems/playerInput/player_input.tscn" id="7_h8sox"]
 [ext_resource type="PackedScene" uid="uid://di41mwvh4s0iy" path="res://Systems/DropBridge/drop_bridge.tscn" id="8_h8sox"]
 [ext_resource type="PackedScene" uid="uid://bj7yergspufjr" path="res://Scenes/DropItemEntity/drop_item_entity.tscn" id="9_64np5"]
+[ext_resource type="PackedScene" uid="uid://bwbj1we5wqpam" path="res://Scenes/Ui/UiInventory/UiInventory.tscn" id="10_6pk0w"]
 [ext_resource type="PackedScene" uid="uid://crbyufxfvday1" path="res://Systems/PlayerBridge/player_bridge.tscn" id="10_qxe8y"]
-[ext_resource type="PackedScene" uid="uid://dmm13qiyyfvxw" path="res://Systems/Ui/UiBridge/UiBridge.tscn" id="11_6pk0w"]
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_64np5"]
-texture = ExtResource("2_g6fif")
-texture_region_size = Vector2i(32, 32)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qxe8y"]
-texture = ExtResource("3_h8sox")
-texture_region_size = Vector2i(32, 32)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
-
-[sub_resource type="TileSet" id="TileSet_ibjym"]
-tile_size = Vector2i(32, 32)
-physics_layer_0/collision_layer = 1
-sources/2 = SubResource("TileSetAtlasSource_qxe8y")
-sources/1 = SubResource("TileSetAtlasSource_64np5")
+[ext_resource type="PackedScene" uid="uid://dmm13qiyyfvxw" path="res://Scenes/Ui/UiBridge/UiBridge.tscn" id="11_6pk0w"]
 
 [node name="MainUsingScene" type="Node2D" unique_id=911860184 node_paths=PackedStringArray("tile_map_layer", "player_input_control", "drop_bridge", "player_bridge", "ui_bridge", "camera")]
 script = ExtResource("1_3lpbi")
@@ -40,8 +21,6 @@ ui_bridge = NodePath("CanvasLayer")
 camera = NodePath("GlobalCamera")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1869089906]
-tile_map_data = PackedByteArray("AAAAABEAAgAAAAAAAAABABEAAgAAAAAAAAACABEAAgAAAAAAAAADABEAAgAAAAAAAAAEABEAAgAAAAAAAAAFABEAAgAAAAAAAAAGABEAAgAAAAAAAAAHABEAAgAAAAAAAAAHABAAAgAAAAAAAAAIABAAAgAAAAAAAAAJAA8AAgAAAAAAAAAKAA8AAgAAAAAAAAAKAA4AAgAAAAAAAAALAA4AAgAAAAAAAAAMAA4AAgAAAAAAAAANAA4AAgAAAAAAAAAOAA4AAgAAAAAAAAAOAA8AAgAAAAAAAAAPAA8AAgAAAAAAAAAQAA8AAgAAAAAAAAAQABAAAgAAAAAAAAARABAAAgAAAAAAAAASABAAAgAAAAAAAAATABAAAgAAAAAAAAATABEAAgAAAAAAAAAUABEAAgAAAAAAAAAVABEAAgAAAAAAAAAVABAAAgAAAAAAAAAWABAAAgAAAAAAAAAXABAAAgAAAAAAAAAYAA8AAgAAAAAAAAAZAA8AAgAAAAAAAAAZAA4AAgAAAAAAAAAaAA4AAgAAAAAAAAAbAA0AAgAAAAAAAAAcAA0AAgAAAAAAAAAcAAwAAgAAAAAAAAAdAAwAAgAAAAAAAAAeAAwAAgAAAAAAAAAfAAwAAgAAAAAAAAAgAAwAAgAAAAAAAAAhAAwAAgAAAAAAAAAiAAwAAgAAAAAAAAAjAAwAAgAAAAAAAAD//xEAAQAAAAAAAAD+/xEAAQAAAAAAAAD9/xEAAQAAAAAAAAD8/xEAAQAAAAAAAAD7/xAAAQAAAAAAAAD6/xAAAQAAAAAAAAD5/xAAAQAAAAAAAAD4/xAAAQAAAAAAAAD3/xAAAQAAAAAAAAD2/xAAAQAAAAAAAAD2/w8AAQAAAAAAAAD1/w8AAQAAAAAAAAD0/w8AAQAAAAAAAAD0/w4AAQAAAAAAAADz/w4AAQAAAAAAAADy/w0AAQAAAAAAAADx/w0AAQAAAAAAAADw/wwAAQAAAAAAAADv/wwAAQAAAAAAAADu/wwAAQAAAAAAAADt/wsAAQAAAAAAAADs/wsAAQAAAAAAAADr/wsAAQAAAAAAAADq/wsAAQAAAAAAAADp/wsAAQAAAAAAAADo/wsAAQAAAAAAAADn/wsAAQAAAAAAAADm/wsAAQAAAAAAAADl/wsAAQAAAAAAAADk/wsAAQAAAAAAAADj/wsAAQAAAAAAAADj/wwAAQAAAAAAAAAkAAwAAQAAAAAAAAAlAAwAAQAAAAAAAAAmAAwAAQAAAAAAAAAnAAwAAQAAAAAAAAAoAAwAAQAAAAAAAAApAAwAAQAAAAAAAAAqAA0AAQAAAAAAAAArAA0AAQAAAAAAAAAsAA0AAQAAAAAAAAAtAA0AAQAAAAAAAAAuAA0AAQAAAAAAAAAvAA0AAQAAAAAAAAAwAA0AAQAAAAAAAAAxAA0AAQAAAAAAAAAyAA0AAQAAAAAAAAAzAA0AAQAAAAAAAAA0AA0AAQAAAAAAAAA1AA0AAQAAAAAAAAA2AA0AAQAAAAAAAAA3AA4AAQAAAAAAAAA4AA4AAQAAAAAAAAA5AA4AAQAAAAAAAAA6AA4AAQAAAAAAAAA6AA8AAQAAAAAAAAA7AA8AAQAAAAAAAAA8AA8AAQAAAAAAAAA9AA8AAQAAAAAAAAA+AA8AAQAAAAAAAAA/AA8AAQAAAAAAAABAAA8AAQAAAAAAAABBAA8AAQAAAAAAAABCAA8AAQAAAAAAAABDAA8AAQAAAAAAAABEAA8AAQAAAAAAAAA=")
-tile_set = SubResource("TileSet_ibjym")
 
 [node name="UsingPlayer" parent="." unique_id=34264864 instance=ExtResource("2_eqcjx")]
 position = Vector2(353, 224)
@@ -57,3 +36,4 @@ drop_entity_scene = ExtResource("9_64np5")
 player_entity_scene = ExtResource("6_wil0y")
 
 [node name="CanvasLayer" parent="." unique_id=1531771844 instance=ExtResource("11_6pk0w")]
+ui_inventory = ExtResource("10_6pk0w")

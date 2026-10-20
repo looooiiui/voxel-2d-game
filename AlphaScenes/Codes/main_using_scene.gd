@@ -96,7 +96,7 @@ func _physics_process(delta: float) -> void:
 ## 多人完整区块渲染
 func _render_map() -> void:
 	# 从世界实体存储器拿到全部玩家数据
-	var player_dict = world.entity_storage.get_all_players()
+	var player_dict = world.get_player_entity_dict()
 	var target_chunks:Dictionary = {}
 	
 	# 遍历所有玩家，各自生成周围区块，自动合并去重

@@ -20,6 +20,7 @@ func on_drop_added(drop_data:DropItemData):
 	var drop_entity_script: DropItemEntity = new_entity as DropItemEntity
 	if drop_entity_script == null:
 		DebugSystem.console_warn_log("掉落桥", "掉落物场景: uid: %s 没有挂载脚本" % drop_data.get_uid())
+		return null
 	# 【注入数据】调用初始化函数，把 uid、bridge、drop实例传给场景脚本
 	drop_entity_script.setup(drop_data.get_uid(), drop_data.item.get_item_instance().get_item_name(), self)
 	

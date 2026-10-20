@@ -11,6 +11,10 @@ var _entity_map: Dictionary = {}
 
 ## 生成玩家实体
 func on_add_player(new_player_data: PlayerData) -> void:
+	# 检查玩家数据是否不存在
+	if new_player_data == null:
+		DebugSystem.console_error_log("玩家桥", "传入的玩家数据为空值，拒绝创建")
+		return
 	var new_player_entity = player_entity_scene.instantiate()
 	var player_entity_script = new_player_entity as PlayerEntity
 	DebugSystem.console_common_log("玩家桥", "创建玩家实体: uid: %s, 实体: %s" % [new_player_data.get_uid(), new_player_entity])

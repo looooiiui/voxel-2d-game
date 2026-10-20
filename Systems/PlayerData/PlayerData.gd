@@ -37,7 +37,7 @@ func get_player_global_pos() -> Vector2:
 	return global_position
 	
 ## 获得玩家网格位置
-func get_player_grid_pos() -> Vector2:
+func get_player_grid_pos() -> Vector2i:
 	return grid_pos
 	
 ## 外部同步数据

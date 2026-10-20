@@ -32,6 +32,10 @@ func allocate_uid() -> int:
 func get_all_players() -> Dictionary:
 	return _players
 
+## 获得玩家uid对应的数据
+func get_player_by_uid(uid: int) -> Dictionary:
+	return get_all_players().get(uid)
+
 ## 查询接口
 ## 获得玩家实体
 func get_player(uid:int) -> PlayerData:
